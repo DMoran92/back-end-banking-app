@@ -1,0 +1,3 @@
+com\bankapp\Customer.class
+com\bankapp\StartWebApplication.class
+com\bankapp\controller\WelcomeController.class

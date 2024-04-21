@@ -1,0 +1,52 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="utf-8">
+    <title>User Registration</title>
+</head>
+<body>
+<div style="margin-left:auto;margin-right:auto;text-align:center">
+    <h1>User Registration</h1>
+    <form action="#" th:action="@{/register}" method="post" th:object="${customer}">
+        <label>First name:</label>
+        <input type="text" th:field="*{firstName}"/><br/>
+
+        <label>Last name:</label>
+        <input type="text" th:field="*{lastName}"/><br/>
+
+        <label>E-mail:</label>
+        <input type="text" th:field="*{email}"/><br/>
+
+        <label>Password:</label>
+        <input type="text" th:field="*{password}"/><br/>
+
+        <label>Phone Number:</label>
+        <input type="text" th:field="*{phoneNumber}"/><br/>
+
+        <label>Address Line 1</label>
+        <input type="text" th:field="*{addrLine1}"/><br/>
+
+        <label>Address Line 2</label>
+        <input type="text" th:field="*{addrLine2}"/><br/>
+
+        <label>Town/City</label>
+        <input type="text" th:field="*{townCity}"/><br/>
+
+        <label>County/State:</label>
+        <select th:field="*{countyState}">
+            <option th:each="p : ${listCountyState}" th:value="${p}" th:text="${p}"/>
+        </select>
+        <br/>
+
+        <label for="note">Notes: </label>
+        <br/>
+        <textarea rows="5" cols="25" id="note" style="vertical-align" th:field="*{note}" top;></textarea>
+        <br/>
+
+        <button type="submit">Register</button>
+
+    </form>
+</div>
+</body>
+</html>
