@@ -4,49 +4,67 @@
 <head>
     <meta charset="utf-8">
     <title>User Registration</title>
+    <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
 </head>
 <body>
+
 <div style="margin-left:auto;margin-right:auto;text-align:center">
     <h1>User Registration</h1>
-    <form action="#" th:action="@{/register}" method="post" th:object="${customer}">
-        <label>First name:</label>
-        <input type="text" th:field="*{firstName}"/><br/>
-
-        <label>Last name:</label>
-        <input type="text" th:field="*{lastName}"/><br/>
-
-        <label>E-mail:</label>
-        <input type="text" th:field="*{email}"/><br/>
-
-        <label>Password:</label>
-        <input type="text" th:field="*{password}"/><br/>
-
-        <label>Phone Number:</label>
-        <input type="text" th:field="*{phoneNumber}"/><br/>
-
-        <label>Address Line 1</label>
-        <input type="text" th:field="*{addrLine1}"/><br/>
-
-        <label>Address Line 2</label>
-        <input type="text" th:field="*{addrLine2}"/><br/>
-
-        <label>Town/City</label>
-        <input type="text" th:field="*{townCity}"/><br/>
-
-        <label>County/State:</label>
-        <select th:field="*{countyState}">
-            <option th:each="p : ${listCountyState}" th:value="${p}" th:text="${p}"/>
-        </select>
-        <br/>
-
-        <label for="note">Notes: </label>
-        <br/>
-        <textarea rows="5" cols="25" id="note" style="vertical-align" th:field="*{note}" top;></textarea>
-        <br/>
-
-        <button type="submit">Register</button>
-
-    </form>
 </div>
+        <table style="margin-left:auto;margin-right:auto;">
+            <form action="#" th:action="@{/register}" method="post" th:object="${customer}">
+            <tr>
+                <td><label>First name:</label></td>
+                <td><input type="text" th:field="*{firstName}"/><br/></td>
+            </tr>
+            <tr>
+                <td><label>Last name:</label></td>
+                <td><input type="text" th:field="*{lastName}"/><br/></td>
+            </tr>
+            <tr>
+                <td><label>E-mail:</label></td>
+                <td><input type="text" th:field="*{email}"/><br/></td>
+            </tr>
+            <tr>
+                <td><label>Password:</label></td>
+                <td><input type="text" th:field="*{password}"/><br/></td>
+            </tr>
+           <tr>
+                <td><label>Phone Number:</label></td>
+                <td><input type="text" th:field="*{phoneNumber}"/><br/></td>
+           </tr>
+            <tr>
+                <td><label>Address Line 1</label></td>
+                <td><input type="text" th:field="*{addrLine1}"/><br/></td>
+            </tr>
+            <tr>
+                <td><label>Address Line 2</label></td>
+                <td><input type="text" th:field="*{addrLine2}"/><br/></td>
+            </tr>
+            <tr>
+                <td><label>Town/City</label></td>
+                <td><input type="text" th:field="*{townCity}"/><br/></td>
+            </tr>
+            <tr>
+                <td><label>County/State:</label></td>
+                <td><select th:field="*{countyState}">
+                        <option th:each="p : ${listCountyState}" th:value="${p}" th:text="${p}"/>
+                    </select></td>
+            </tr>
+            <tr>
+                <td><label for="note">Notes: </label></td>
+                <td><br/>
+                   <textarea rows="5" cols="25" id="note" style="vertical-align" th:field="*{note}" top;></textarea>
+                    <br/>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><button type="submit">Register</button></td>
+            </tr>
+            </form>
+        </table>
+
 </body>
 </html>
