@@ -3,8 +3,7 @@ package com.bankapp.controller;
 import com.bankapp.Customer;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -39,7 +38,7 @@ public class WelcomeController {
     }
 
     @GetMapping("/register")
-    public String showForm(Model model) {
+    public String showRegistration(Model model) {
         Customer customer = new Customer();
         model.addAttribute("customer", customer);
 
@@ -49,4 +48,16 @@ public class WelcomeController {
         return "registration";
     }
 
+    @GetMapping("/returnToDashboard")
+    public String returnToDashboard(Model model) {
+        return "welcome";
+    }
+
+    @RequestMapping(value = "/processRegistration", method = RequestMethod.POST)
+    public String processRegistration(@ModelAttribute Customer customer, Model model) {
+        return "welcome";
+    }
+
+
 }
+
