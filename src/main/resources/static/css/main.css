@@ -1,0 +1,28 @@
+body{
+    padding-top: 50px;
+    background-color:lightblue;
+}
+
+.starter-template{
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.center{
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
+}
+
+h1{
+    color:darkblue;
+}
+
+h2{
+    color:yellow;
+}
+
+a{
+    color:black;
+    text-decoration:underline;
+}
