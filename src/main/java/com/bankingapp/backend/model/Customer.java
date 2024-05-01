@@ -27,6 +27,7 @@ public class Customer {
     private String countyState;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "CustomerId")
     private int CustomerId;
     @Column(name = "Password")
     private String password;
@@ -39,12 +40,13 @@ public class Customer {
     private String idNumber;
 
 
+
     //private List<Account> account = new ArrayList<Account>();
 
     // Constructors
     public Customer() {}
 
-    public Customer(String firstName, String lastName, String email, int phone, int countryId, String addrLine1, String addrLine2, String townCity, String countryState, String password, String idType, String idNumber, String dob) {
+    public Customer(String firstName, String lastName, String email, int phone, int countryId, String addrLine1, String addrLine2, String townCity, String countryState, String password, String idType, String idNumber, String dob, Account account) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;

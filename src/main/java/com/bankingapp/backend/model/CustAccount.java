@@ -2,41 +2,26 @@ package com.bankingapp.backend.model;
 
 import jakarta.persistence.*;
 
+//attmpt at creating a joined entity
+//https://www.baeldung.com/jpa-mapping-single-entity-to-multiple-tables
 
 @Entity
-@Table(name = "account")
-//@SecondaryTable(name = "customer", pkJoinColumns = @PrimaryKeyJoinColumn(name = "CustomerId"))
-public class Account {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "AccountId")
-    private int accountId;
+@Table(name = "customer")
+@SecondaryTable(name = "account", pkJoinColumns = @PrimaryKeyJoinColumn(name = "AccountId"))
+public class CustAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CustomerId")
-    private int customerId;
-    @Column(name = "AccountType")
+    int customerId;
+    @Column(name = "AccountType", table = "account")
     private String accountType;
-    @Column(name = "Balance")
+    @Column(name = "Balance", table = "account")
     private double balance;
 
-    // Constructors
-    public Account() {}
-
-    public Account(int accountId, int customerId, String accountType, double balance) {
-        this.accountId = accountId;
+    public CustAccount(int customerId, String accountType, double balance) {
         this.customerId = customerId;
         this.accountType = accountType;
         this.balance = balance;
-    }
-
-    // Getters and Setters
-    public int getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(int accountId) {
-        this.accountId = accountId;
     }
 
     public int getCustomerId() {

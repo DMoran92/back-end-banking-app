@@ -6,7 +6,8 @@ import java.util.List;
 
 public interface NewUserService {
 
-    Customer addNewUser(Customer customer);
+    Customer addNewCustomer(Customer customer);
+
     public List<Customer> getAllCustomers();
 
 }
