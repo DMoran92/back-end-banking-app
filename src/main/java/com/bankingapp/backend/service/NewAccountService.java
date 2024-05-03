@@ -6,6 +6,6 @@ import java.util.List;
 
 public interface NewAccountService {
 
-    public List<Account> getAllAccounts();
+    List<Account> getAllAccounts();
 
 }

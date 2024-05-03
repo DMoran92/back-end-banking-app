@@ -2,8 +2,9 @@ package com.bankingapp.backend.controller;
 
 import com.bankingapp.backend.model.Account;
 import com.bankingapp.backend.model.Customer;
-import com.bankingapp.backend.service.NewUserService;
 import com.bankingapp.backend.service.NewAccountService;
+import com.bankingapp.backend.service.NewUserService;
+//import com.bankingapp.backend.service.NewAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,6 +18,9 @@ import java.util.List;
 
 @Controller
 public class RegisterController {
+    @Autowired
+    private NewAccountService newacc;
+
     @Autowired
     private NewUserService newuser;
     /* bandaid*/
@@ -49,17 +53,19 @@ public class RegisterController {
             @RequestParam String idNumber) {
 
 
-        Customer newCustomer = new Customer(firstName,lastName, email, phoneNumber, countryId, addrLine1, addrLine2, townCity, countyState, password, idType, idNumber, dob, new Account());
+        Customer newCustomer = new Customer(firstName,lastName, email, phoneNumber, countryId, addrLine1, addrLine2, townCity, countyState, password, idType, idNumber, dob);
         /* this should return failure  if it was unsucessful to create new user */
-        newuser.addNewCustomer(newCustomer);
+        //newuser.addNewCustomer(newCustomer);
 
         return "redirect:/debug-list";
     }
 
     @GetMapping("/debug-list")
     public String getAllCustomers(Model model) {
+        List<Account> accounts = newacc.getAllAccounts();
         List<Customer> customers = newuser.getAllCustomers();
         model.addAttribute("customers", customers);
+        model.addAttribute("accounts", accounts);
         return "debug-list";
     }
 

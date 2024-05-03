@@ -46,7 +46,7 @@ public class Customer {
     // Constructors
     public Customer() {}
 
-    public Customer(String firstName, String lastName, String email, int phone, int countryId, String addrLine1, String addrLine2, String townCity, String countryState, String password, String idType, String idNumber, String dob, Account account) {
+    public Customer(String firstName, String lastName, String email, int phone, int countryId, String addrLine1, String addrLine2, String townCity, String countryState, String password, String idType, String idNumber, String dob) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;

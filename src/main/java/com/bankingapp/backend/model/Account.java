@@ -5,14 +5,11 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "account")
-//@SecondaryTable(name = "customer", pkJoinColumns = @PrimaryKeyJoinColumn(name = "CustomerId"))
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "AccountId")
     private int accountId;
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CustomerId")
     private int customerId;
     @Column(name = "AccountType")
@@ -23,8 +20,7 @@ public class Account {
     // Constructors
     public Account() {}
 
-    public Account(int accountId, int customerId, String accountType, double balance) {
-        this.accountId = accountId;
+    public Account(int customerId, String accountType, double balance) {
         this.customerId = customerId;
         this.accountType = accountType;
         this.balance = balance;
