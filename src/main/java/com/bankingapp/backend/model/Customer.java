@@ -4,6 +4,8 @@ package com.bankingapp.backend.model;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "customer")
 public class Customer {
@@ -28,7 +30,7 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CustomerId")
-    private int CustomerId;
+    private int customerId;
     @Column(name = "Password")
     private String password;
     /* todo: dob, idtype and idnumber missing in the db */
@@ -39,7 +41,9 @@ public class Customer {
     @Column(name = "idNumber")
     private String idNumber;
 
-
+    @OneToMany (fetch = FetchType.EAGER)
+    @JoinColumn(name = "CustomerId", referencedColumnName = "CustomerId")
+    private List<Account> accounts;
 
     //private List<Account> account = new ArrayList<Account>();
 
@@ -112,11 +116,11 @@ public class Customer {
     }
 
     public int getCustomerId() {
-        return CustomerId;
+        return customerId;
     }
 
     public void setCustomerId(int customerId) {
-        this.CustomerId = customerId;
+        this.customerId = customerId;
     }
 
     public String getPassword() {
@@ -181,4 +185,12 @@ public class Customer {
     public String getDob() { return dob; }
 
     public void setDob(String dob) { this.dob = dob; }
+
+    public List<Account> getAccounts() {
+        return accounts;
+    }
+
+    public void setAccounts(List<Account> accounts) {
+        this.accounts = accounts;
+    }
 }

@@ -60,13 +60,13 @@ public class RegisterController {
         return "redirect:/debug-list";
     }
 
-    @GetMapping("/debug-list")
+    /*@GetMapping("/debug-list")
     public String getAllCustomers(Model model) {
         List<Account> accounts = newacc.getAllAccounts();
         List<Customer> customers = newuser.getAllCustomers();
         model.addAttribute("customers", customers);
         model.addAttribute("accounts", accounts);
         return "debug-list";
-    }
+    }*/
 
 }

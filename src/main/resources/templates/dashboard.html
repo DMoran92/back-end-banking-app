@@ -17,13 +17,18 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="customer : ${customers.get(CustomerId)}">
+    <tr th:each="customer : ${customers}">
+        <td th:text="${customer.firstName}"></td>
+        <td th:text="${customer.getAccounts().get(0).getBalance()}"></td>
+    </tr>
+
+    <!-- <tr th:each="customer : ${customers.get(CustomerId)}">
         <td th:text="${customer.firstName}"></td>
         <td th:text="${customer.lastName}"></td>
         <td th:text="${customer.email}"></td>
         <td th:text="${customer.phoneNumber}"></td>
     </tr>
-    <!-- <tr th:each="account : ${accounts.get(CustomerId)}">
+    <tr th:each="account : ${accounts.get(CustomerId)}">
         <td th:text="${account.balance}"></td>
     </tr> -->
     </tbody>

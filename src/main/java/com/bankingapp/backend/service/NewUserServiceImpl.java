@@ -3,6 +3,7 @@ package com.bankingapp.backend.service;
 import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.model.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,6 +13,10 @@ public class NewUserServiceImpl  implements NewUserService {
 
     @Autowired
     private final CustomerRepository customerRepository;
+
+    Specification<Customer> isJoe = CustomerSpecifications.hasFirstNameLike("Joe");
+    Specification<Customer> isJohn = CustomerSpecifications.hasFirstNameLike("John");
+    Specification<Customer> isAcc = CustomerSpecifications.accountDetails(1);
 
     @Autowired
     public NewUserServiceImpl(CustomerRepository customerRepository) {
@@ -28,7 +33,11 @@ public class NewUserServiceImpl  implements NewUserService {
     /* return list of customers */
     @Override
     public List<Customer> getAllCustomers() {
-
         return customerRepository.findAll();
+    }
+
+    @Override
+    public List<Customer> getAccountDetails() {
+        return customerRepository.findAll(isAcc);
     }
 }
