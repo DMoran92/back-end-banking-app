@@ -9,6 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -20,25 +22,23 @@ public class DashboardController {
     @Autowired
     private NewAccountService newacc;
 
-    /*@RequestMapping("/dashboard/")
-    public String getCustomerDashboard(@RequestParam(value="CustomerId") int CustomerId, Model model){
-        //List<Customer> customers = newuser.getAllCustomers();
-        //List<Account> accounts = newacc.getAllAccounts();
-        Specification<Customer> customers = customerSpecification.hasFirstNameLike("Joe");
-        model.addAttribute("CustomerId", CustomerId);
+    @RequestMapping("/dashboard/")
+    public String getCustomerDashboard(@RequestParam(value="CustomerId") int customerId, Model model){
+        List<Customer> customers = newuser.getAccountDetails(customerId);
+        model.addAttribute("CustomerId", customerId);
         model.addAttribute("customers", customers);
         //model.addAttribute("accounts", accounts);
         return "dashboard";
-    }*/
+    }
 
     @GetMapping("/debug-list")
     public String testSpec(Model model) {
-        List<Customer> customers = newuser.getAccountDetails();
+        //List<Customer> customers = newuser.getAccountDetails();
         //Customer test = new Customer();
         //double aaa = test.getAccounts().get(0).getBalance();
         //List<Account> accounts = newacc.getBalance();
         //model.addAttribute("accounts", accounts);
-        model.addAttribute("customers", customers);
+        //model.addAttribute("customers", customers);
         return "dashboard";
     }
 }

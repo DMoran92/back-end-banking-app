@@ -12,13 +12,13 @@
     <tr>
         <th>First Name</th>
         <th>Last Name</th>
-        <th>Email</th>
-        <th>Phone</th>
+        <th>Account Balance</th>
     </tr>
     </thead>
     <tbody>
     <tr th:each="customer : ${customers}">
         <td th:text="${customer.firstName}"></td>
+        <td th:text="${customer.lastName}"></td>
         <td th:text="${customer.getAccounts().get(0).getBalance()}"></td>
     </tr>
 
@@ -33,5 +33,6 @@
     </tr> -->
     </tbody>
 </table>
+<a href="/">Home</a>
 </body>
 </html>

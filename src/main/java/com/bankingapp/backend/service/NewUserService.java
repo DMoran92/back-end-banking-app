@@ -11,6 +11,6 @@ public interface NewUserService {
 
     public List<Customer> getAllCustomers();
 
-    List<Customer> getAccountDetails();
+    List<Customer> getAccountDetails(int id);
 
 }
