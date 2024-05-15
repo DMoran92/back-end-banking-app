@@ -2,6 +2,8 @@ package com.bankingapp.backend.model;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 
 @Entity
 @Table(name = "account")
@@ -9,13 +11,17 @@ public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "AccountId")
-    private int accountId;
+    private long accountId;
     @Column(name = "CustomerId")
     private int customerId;
     @Column(name = "AccountType")
     private String accountType;
     @Column(name = "Balance")
     private double balance;
+
+    @OneToMany (fetch = FetchType.EAGER)
+    @JoinColumn(name = "AccountId", referencedColumnName = "AccountId")
+    private List<Transaction> transactions;
 
     // Constructors
     public Account() {}
@@ -27,11 +33,11 @@ public class Account {
     }
 
     // Getters and Setters
-    public int getAccountId() {
+    public long getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(int accountId) {
+    public void setAccountId(long accountId) {
         this.accountId = accountId;
     }
 
@@ -57,5 +63,14 @@ public class Account {
 
     public void setBalance(double balance) {
         this.balance = balance;
+    }
+
+
+    public List<Transaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<Transaction> transactions) {
+        this.transactions = transactions;
     }
 }

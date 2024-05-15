@@ -7,10 +7,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 public class CustomerSpecifications {
 
-    public static Specification<Customer> hasFirstNameLike(String name){
-        return (root, query, criteriaBuilder) -> criteriaBuilder.like(root.<String>get("firstName"), "%" + name + "%");
-    }
-
+    //joins account and customer table on customerId
     public static Specification<Customer> accountDetails(int id){
         return (root, query, criteriaBuilder) -> {
             Join<Customer, Account> custAccount = root.join("accounts");

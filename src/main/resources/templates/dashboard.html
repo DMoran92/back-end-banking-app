@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
@@ -9,30 +9,58 @@
 
 <table>
     <thead>
-    <tr>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Account Balance</th>
-    </tr>
+        <tr>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Account Balance</th>
+        </tr>
     </thead>
     <tbody>
-    <tr th:each="customer : ${customers}">
-        <td th:text="${customer.firstName}"></td>
-        <td th:text="${customer.lastName}"></td>
-        <td th:text="${customer.getAccounts().get(0).getBalance()}"></td>
-    </tr>
-
-    <!-- <tr th:each="customer : ${customers.get(CustomerId)}">
-        <td th:text="${customer.firstName}"></td>
-        <td th:text="${customer.lastName}"></td>
-        <td th:text="${customer.email}"></td>
-        <td th:text="${customer.phoneNumber}"></td>
-    </tr>
-    <tr th:each="account : ${accounts.get(CustomerId)}">
-        <td th:text="${account.balance}"></td>
-    </tr> -->
+        <tr th:each="customer : ${customers}">
+            <td th:text="${customer.firstName}"></td>
+            <td th:text="${customer.lastName}"></td>
+            <td th:text="${customer.getAccounts().get(0).getBalance()}"></td>
+        </tr>
     </tbody>
 </table>
+<br>
+<table>
+    <thead>
+        <tr>
+            <th>Sender</th>
+            <th>Recipient</th>
+            <th>Amount Sent</th>
+            <th>Date & Time of Transaction</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr th:each="accountTransaction : ${accountTransactions}">
+            <td th:text="${accountTransaction.getAccountId()}"></td>
+            <td th:text="${accountTransaction.getRecipientId()}"></td>
+            <td th:text="${accountTransaction.getAmount()}"></td>
+            <td th:text="${accountTransaction.getTimestamp()}"></td>
+        </tr>
+    </tbody>
+</table>
+<br><br>
+<h3>Send Money</h3>
+<form name="makeTransaction" action="#" th:action="@{/makeTransaction/}" th:object="${transaction}" method="post">
+    <table>
+        <tr>
+            <td>Amount: </td>
+            <td><input type="number" th:field="*{amount}"><br></td>
+        </tr>
+        <tr>
+            <td>From: </td>
+            <td><input type="number" th:field="*{accountId}"><br></td>
+        </tr>
+        <tr>
+            <td>To: </td>
+            <td><input type="number" th:field="*{recipientId}"><br></td>
+        </tr>
+    </table>
+    <input type="submit" value="Submit" />
+</form><br>
 <a href="/">Home</a>
 </body>
 </html>

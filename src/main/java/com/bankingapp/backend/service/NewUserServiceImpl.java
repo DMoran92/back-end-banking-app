@@ -14,9 +14,6 @@ public class NewUserServiceImpl  implements NewUserService {
     @Autowired
     private final CustomerRepository customerRepository;
 
-    Specification<Customer> isJoe = CustomerSpecifications.hasFirstNameLike("Joe");
-    Specification<Customer> isJohn = CustomerSpecifications.hasFirstNameLike("John");
-
     @Autowired
     public NewUserServiceImpl(CustomerRepository customerRepository) {
 
@@ -35,6 +32,7 @@ public class NewUserServiceImpl  implements NewUserService {
         return customerRepository.findAll();
     }
 
+    //get account details for a customer
     @Override
     public List<Customer> getAccountDetails(int id) {
         Specification<Customer> isAcc = CustomerSpecifications.accountDetails(id);
