@@ -45,8 +45,6 @@ public class Customer {
     @JoinColumn(name = "CustomerId", referencedColumnName = "CustomerId")
     private List<Account> accounts;
 
-    //private List<Account> account = new ArrayList<Account>();
-
     // Constructors
     public Customer() {}
 
@@ -172,16 +170,6 @@ public class Customer {
         this.countyState = countryState;
     }
 
-
-    /*
-        public List<Account> getAccount() {
-            return account;
-        }
-
-        public void addAccount(Account newAcc) {
-            account.add(newAcc);
-        }
-    */
     public String getDob() { return dob; }
 
     public void setDob(String dob) { this.dob = dob; }

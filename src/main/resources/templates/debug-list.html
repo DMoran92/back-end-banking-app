@@ -23,12 +23,6 @@
         <td th:text="${customer.email}"></td>
         <td th:text="${customer.phoneNumber}"></td>
     </tr>
-    <tr th:each="account : ${accounts}">
-        <td th:text="${account.accountId}"></td>
-        <td th:text="${account.customerId}"></td>
-        <td th:text="${account.accountType}"></td>
-        <td th:text="${account.balance}"></td>
-    </tr>
     </tbody>
 </table>
 <a href="/">main page</a>

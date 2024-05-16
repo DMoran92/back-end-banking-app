@@ -55,17 +55,6 @@ public class DashboardController {
         return "dashboard";
     }
 
-    @GetMapping("/debug-list")
-    public String testSpec(Model model) {
-        //List<Customer> customers = newuser.getAccountDetails();
-        //Customer test = new Customer();
-        //double aaa = test.getAccounts().get(0).getBalance();
-        //List<Account> accounts = newacc.getBalance();
-        //model.addAttribute("accounts", accounts);
-        //model.addAttribute("customers", customers);
-        return "dashboard";
-    }
-
     @PostMapping("/makeTransaction/")
     public String makeTransaction(@RequestParam double amount, @RequestParam long accountId, @RequestParam int recipientId){
 

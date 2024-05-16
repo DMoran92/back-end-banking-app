@@ -14,22 +14,10 @@ public class NewAccountServiceImpl  implements NewAccountService {
     @Autowired
     private final AccountRepository accountRepository;
 
-    //Specification<Account> hasBal = AccountSpecifications.custAccount(1);
-
     @Autowired
     public NewAccountServiceImpl( AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
     }
-
-    /*@Override
-    public List<Account> getAllAccounts() {
-        return accountRepository.findAll();
-    }
-
-    @Override
-    public List<Account> getBalance() {
-        return accountRepository.findAll();
-    }*/
 
     //get the transactions for an account
     @Override

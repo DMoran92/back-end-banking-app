@@ -55,18 +55,16 @@ public class RegisterController {
 
         Customer newCustomer = new Customer(firstName,lastName, email, phoneNumber, countryId, addrLine1, addrLine2, townCity, countyState, password, idType, idNumber, dob);
         /* this should return failure  if it was unsucessful to create new user */
-        //newuser.addNewCustomer(newCustomer);
+        newuser.addNewCustomer(newCustomer);
 
-        return "redirect:/debug-list";
+        return "welcome";
     }
 
-    /*@GetMapping("/debug-list")
+    @GetMapping("/debug-list")
     public String getAllCustomers(Model model) {
-        List<Account> accounts = newacc.getAllAccounts();
         List<Customer> customers = newuser.getAllCustomers();
         model.addAttribute("customers", customers);
-        model.addAttribute("accounts", accounts);
         return "debug-list";
-    }*/
+    }
 
 }

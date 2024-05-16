@@ -8,9 +8,7 @@ import java.util.List;
 public interface NewUserService {
 
     Customer addNewCustomer(Customer customer);
-
-    public List<Customer> getAllCustomers();
-
+    List<Customer> getAllCustomers();
     List<Customer> getAccountDetails(int id);
 
 }
