@@ -1,17 +1,10 @@
+#sidebar-nav{
+    width:200px;
+}
+
 body{
-    padding-top: 50px;
+    /*padding-top: 50px;*/
     background-color:lightblue;
-}
-
-.starter-template{
-    padding: 3rem 1.5rem;
-    text-align: center;
-}
-
-.center{
-    margin-left:auto;
-    margin-right:auto;
-    text-align:center;
 }
 
 h1{
@@ -26,3 +19,4 @@ a{
     color:black;
     text-decoration:underline;
 }
+
