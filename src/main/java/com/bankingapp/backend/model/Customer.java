@@ -4,6 +4,8 @@ package com.bankingapp.backend.model;
 
 import jakarta.persistence.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "customer")
 public class Customer {
@@ -27,7 +29,8 @@ public class Customer {
     private String countyState;
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int CustomerId;
+    @Column(name = "CustomerId")
+    private int customerId;
     @Column(name = "Password")
     private String password;
     /* todo: dob, idtype and idnumber missing in the db */
@@ -38,8 +41,9 @@ public class Customer {
     @Column(name = "idNumber")
     private String idNumber;
 
-
-    //private List<Account> account = new ArrayList<Account>();
+    @OneToMany (fetch = FetchType.EAGER)
+    @JoinColumn(name = "CustomerId", referencedColumnName = "CustomerId")
+    private List<Account> accounts;
 
     // Constructors
     public Customer() {}
@@ -110,11 +114,11 @@ public class Customer {
     }
 
     public int getCustomerId() {
-        return CustomerId;
+        return customerId;
     }
 
     public void setCustomerId(int customerId) {
-        this.CustomerId = customerId;
+        this.customerId = customerId;
     }
 
     public String getPassword() {
@@ -166,17 +170,15 @@ public class Customer {
         this.countyState = countryState;
     }
 
-
-    /*
-        public List<Account> getAccount() {
-            return account;
-        }
-
-        public void addAccount(Account newAcc) {
-            account.add(newAcc);
-        }
-    */
     public String getDob() { return dob; }
 
     public void setDob(String dob) { this.dob = dob; }
+
+    public List<Account> getAccounts() {
+        return accounts;
+    }
+
+    public void setAccounts(List<Account> accounts) {
+        this.accounts = accounts;
+    }
 }
