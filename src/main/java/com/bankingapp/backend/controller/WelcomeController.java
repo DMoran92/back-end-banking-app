@@ -14,7 +14,7 @@ public class WelcomeController {
 
     @GetMapping("/dashboard")
     public String showLanding(Model model) {
-        return "dashboard";
+        return "dashboard_bootstrap";
     }
 }
 
