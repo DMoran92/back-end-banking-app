@@ -1,6 +1,7 @@
 package com.bankingapp.backend.service;
 
 import com.bankingapp.backend.model.Account;
+import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.Transaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.TransactionRepository;
@@ -43,7 +44,7 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Transaction newTransaction(Transaction transaction) {
+    public Transaction makeNewTransaction(Transaction transaction) {
         return transactionRepository.save(transaction);
     }
 }

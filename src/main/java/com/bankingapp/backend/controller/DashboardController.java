@@ -44,14 +44,23 @@ public class DashboardController {
         List<Customer> customers = newuser.getAccountDetails(customerId);
         List<Account> accounts = newacc.getTransactions(customers.get(0).getAccounts().get(0).getAccountId());
 
-        //Get the accounts list of outgoing transactions
-        List<Transaction> accountTransactions = accounts.get(0).getTransactions();
-        Collections.reverse(accountTransactions); //reversed list so latest transaction is on top
+        //check if there's any transactions for the new account
+        if(accounts.isEmpty()){
+            model.addAttribute("CustomerId", customerId);
+            model.addAttribute("customers", customers);
+            model.addAttribute("transaction", transaction);
 
-        model.addAttribute("accountTransactions", accountTransactions);
-        model.addAttribute("CustomerId", customerId);
-        model.addAttribute("customers", customers);
-        model.addAttribute("transaction", transaction);
+        }
+        else{
+            List<Transaction> accountTransactions = accounts.get(0).getTransactions();
+            Collections.reverse(accountTransactions); //reversed list so latest transaction is on top
+
+            model.addAttribute("accountTransactions", accountTransactions);
+            model.addAttribute("CustomerId", customerId);
+            model.addAttribute("customers", customers);
+            model.addAttribute("transaction", transaction);
+        }
+
         return "dashboard";
     }
 
@@ -75,7 +84,7 @@ public class DashboardController {
         //call methods to update the database
         transactionService.sendMoney(sender, transaction, accountId);
         transactionService.receiveMoney(recipient, transaction, recipientId);
-        transactionService.newTransaction(transaction);
-        return "welcome";
+        transactionService.makeNewTransaction(transaction);
+        return "redirect:/";
     }
 }
