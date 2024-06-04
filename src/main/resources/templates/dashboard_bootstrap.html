@@ -3,9 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-
-    <title>Landing page</title>
-
+    <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
     <link rel="stylesheet" th:href="@{/css/main.css}"/>
@@ -54,8 +52,74 @@
         .icon-300 { font-size: 300px; }
 
     </style>
-</head>
+    <script>
+        // Function to make a fetch request with included credentials (cookies)
+        // https://javascript.info/fetch-crossorigin#credentials
+        // https://developer.mozilla.org/en-US/docs/Web/API/fetch#credentials
+        // if we don't have this we get 403 sometimes
+        async function fetchWithToken(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                credentials: 'include' // Ensure cookies are included in the request
+            });
+            if (!response.ok) {
+                showErrorModal('Network response was not ok: ' + response.statusText); // will need to provide proper error msg
+                //throw new Error('Network response was not ok ' + response.statusText);
 
+            }
+            return response.json();
+        }
+
+        async function loadDashboard() {
+            try {
+                const data = await fetchWithToken('/dashboard/');
+                console.log('Fetched data:', data); // Log the fetched data for debugging
+                populateDashboard(data);
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                alert('Failed to load dashboard!');
+            }
+        }
+
+        function populateDashboard(data) {
+            // Populate customer details
+            if (data.customer && data.customer.firstName && data.customer.lastName && data.customer.accounts) {
+                document.getElementById('customer-details').innerHTML = `
+                    <tr>
+                        <td>${data.customer.firstName}</td>
+                        <td>${data.customer.lastName}</td>
+                        <td>${data.customer.accounts[0].balance}</td>
+                    </tr>
+                `;
+            } else {
+                console.error('Customer data is missing or malformed', data);
+            }
+
+            // Populate transactions
+            if (data.accountTransactions) {
+                const transactionsHtml = data.accountTransactions.map(transaction => `
+                    <tr>
+                        <td>${transaction.accountId}</td>
+                        <td>${transaction.recipientId}</td>
+                        <td>${transaction.amount}</td>
+                        <td>${transaction.timestamp}</td>
+                    </tr>
+                `).join('');
+                document.getElementById('transactions').innerHTML = transactionsHtml;
+            } else {
+                console.error('Transaction data is missing or malformed', data);
+            }
+        }
+        /* pop a error modal if something goes wrong, probably will need better error handling (more user friendly */
+        function showErrorModal(message) {
+            const errorModal = new bootstrap.Modal(document.getElementById('errorModal'), {});
+            document.getElementById('errorModalBody').innerText = message;
+            errorModal.show();
+        }
+
+        window.onload = loadDashboard;
+    </script>
+</head>
 
 <body>
 <script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/bootstrap.min.js"></script>
@@ -77,17 +141,6 @@
                 <li class="nav-item">
                     <a class="nav-link toolbar-item" href="#">Link</a>
                 </li>
-                <!--li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Dropdown
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Action</a></li>
-                        <li><a class="dropdown-item" href="#">Another action</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Something else here</a></li>
-                    </ul>
-                </li-->
                 <li class="nav-item">
                     <a class="nav-link disabled toolbar-item">Disabled</a>
                 </li>
@@ -129,291 +182,44 @@
             <div class="row">
                 <div class="col-12 col-xl-6 mb-4 mb-lg-0">
                     <div class="card">
-                        <h5 class="card-header">Latest transactions</h5>
+                        <h5 class="card-header">Customer Details</h5>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table">
                                     <thead>
                                     <tr>
-                                        <th scope="col">Order</th>
-                                        <th scope="col">Product</th>
-                                        <th scope="col">Customer</th>
-                                        <th scope="col">Total</th>
-                                        <th scope="col">Date</th>
-                                        <th scope="col"></th>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Account Balance</th>
                                     </tr>
                                     </thead>
-                                    <tbody>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
+                                    <tbody id="customer-details">
+                                    <!-- Customer details will be populated here -->
                                     </tbody>
                                 </table>
                             </div>
-                            <a href="#" class="btn btn-block btn-light">View all</a>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-xl-6 mb-4 mb-lg-0">
                     <div class="card">
-                        <h5 class="card-header">Latest transactions</h5>
+                        <h5 class="card-header">Latest Transactions</h5>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table">
                                     <thead>
                                     <tr>
-                                        <th scope="col">Order</th>
-                                        <th scope="col">Product</th>
-                                        <th scope="col">Customer</th>
-                                        <th scope="col">Total</th>
-                                        <th scope="col">Date</th>
-                                        <th scope="col"></th>
+                                        <th>Sender</th>
+                                        <th>Recipient</th>
+                                        <th>Amount Sent</th>
+                                        <th>Date & Time of Transaction</th>
                                     </tr>
                                     </thead>
-                                    <tbody>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
+                                    <tbody id="transactions">
+                                    <!-- Transactions will be populated here -->
                                     </tbody>
                                 </table>
                             </div>
-                            <a href="#" class="btn btn-block btn-light">View all</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Latest transactions</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col">Order</th>
-                                        <th scope="col">Product</th>
-                                        <th scope="col">Customer</th>
-                                        <th scope="col">Total</th>
-                                        <th scope="col">Date</th>
-                                        <th scope="col"></th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <a href="#" class="btn btn-block btn-light">View all</a>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Latest transactions</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th scope="col">Order</th>
-                                        <th scope="col">Product</th>
-                                        <th scope="col">Customer</th>
-                                        <th scope="col">Total</th>
-                                        <th scope="col">Date</th>
-                                        <th scope="col"></th>
-                                    </tr>
-                                    </thead>
-                                    <tbody>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17371705</th>
-                                        <td>Volt Premium Bootstrap 5 Dashboard</td>
-                                        <td>johndoe@gmail.com</td>
-                                        <td>€61.11</td>
-                                        <td>Aug 31 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    <tr>
-                                        <th scope="row">17370540</th>
-                                        <td>Pixel Pro Premium Bootstrap UI Kit</td>
-                                        <td>jacob.monroe@company.com</td>
-                                        <td>$153.11</td>
-                                        <td>Aug 28 2020</td>
-                                        <td><a href="#" class="btn btn-sm btn-primary">View</a></td>
-                                    </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <a href="#" class="btn btn-block btn-light">View all</a>
                         </div>
                     </div>
                 </div>
@@ -422,6 +228,25 @@
     </div>
 </div>
 
+<!-- Error Modal used to display errors -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="errorModalBody">
+                <!-- Error message will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Load jQuery first -->
+<script src="/webjars/jquery/3.3.1/jquery.min.js"></script>
 <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
 </body>
 </html>
