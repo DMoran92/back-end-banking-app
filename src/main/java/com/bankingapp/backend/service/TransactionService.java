@@ -9,5 +9,5 @@ import java.util.Optional;
 public interface TransactionService {
     Optional<Account> sendMoney(Account account, Transaction transaction, long accountId);
     Optional<Account> receiveMoney(Account account, Transaction transaction, long accountId);
-    Transaction  newTransaction(Transaction transaction);
+    Transaction  makeNewTransaction(Transaction transaction);
 }

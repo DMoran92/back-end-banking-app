@@ -2,69 +2,61 @@ package com.bankingapp.backend.controller;
 
 import com.bankingapp.backend.model.Account;
 import com.bankingapp.backend.model.Customer;
+import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.service.NewAccountService;
 import com.bankingapp.backend.service.NewUserService;
-//import com.bankingapp.backend.service.NewAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.*;
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.Arrays;
-import java.util.List;
-
-@Controller
+@RestController
+@RequestMapping("/api") // Add base request mapping for better URL management
 public class RegisterController {
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private NewUserService newUserService;
+
     @Autowired
     private NewAccountService newacc;
 
-    @Autowired
-    private NewUserService newuser;
-    /* bandaid*/
-    private int countryId = 0;
-
-    @GetMapping("/register")
-    public String showRegistration(Model model) {
-        Customer customer = new Customer();
-        model.addAttribute("customer", customer);
-
-        List<String> listCountyState = Arrays.asList("Dublin, Ireland", "Galway, Ireland", "Cork, Ireland");
-        model.addAttribute("listCountyState", listCountyState);
-
-        return "registration";
-    }
-
     @PostMapping("/register")
-    public String addCustomer(
-            @RequestParam String firstName,
-            @RequestParam String lastName,
-            @RequestParam String email,
-            @RequestParam int phoneNumber,
-            @RequestParam String dob,
-            @RequestParam String addrLine1,
-            @RequestParam String addrLine2,
-            @RequestParam String townCity,
-            @RequestParam String countyState,
-            @RequestParam String password,
-            @RequestParam String idType,
-            @RequestParam String idNumber) {
+    public Map<String, String> addCustomer(@RequestBody Customer customer) {
+        // Generate a unique 8-digit username
+        String username = generateUniqueUsername();
+        customer.setUsername(username);
+        customer.setPassword(passwordEncoder.encode(customer.getPassword()));
 
+        // Add new customer
+        newUserService.addNewCustomer(customer);
 
-        Customer newCustomer = new Customer(firstName,lastName, email, phoneNumber, countryId, addrLine1, addrLine2, townCity, countyState, password, idType, idNumber, dob);
-        /* this should return failure  if it was unsucessful to create new user */
-        newuser.addNewCustomer(newCustomer);
+        //create a new account for the user
+        int accountCustomerId = newacc.getCustomerIdForAccount();
+        Account newAccount = new Account(accountCustomerId, "Current", 0);
+        newacc.addNewAccount(newAccount);
 
-        return "welcome";
+        // Return the generated username
+        Map<String, String> response = new HashMap<>();
+        response.put("username", username);
+        return response;
     }
 
-    @GetMapping("/debug-list")
-    public String getAllCustomers(Model model) {
-        List<Customer> customers = newuser.getAllCustomers();
-        model.addAttribute("customers", customers);
-        return "debug-list";
+    private String generateUniqueUsername() {
+        SecureRandom random = new SecureRandom();
+        String username;
+        do {
+            // Generate a random 8-digit number
+            int number = 10000000 + random.nextInt(90000000);
+            username = String.valueOf(number);
+        } while (customerRepository.findByUsername(username) != null);
+        return username;
     }
-
 }

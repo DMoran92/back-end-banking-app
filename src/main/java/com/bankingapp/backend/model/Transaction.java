@@ -21,8 +21,7 @@ public class Transaction {
     public Transaction() {
     }
 
-    public Transaction(int transactionId, long accountId, int recipientId, double amount, String timestamp) {
-        this.transactionId = transactionId;
+    public Transaction(long accountId, int recipientId, double amount, String timestamp) {
         this.accountId = accountId;
         this.recipientId = recipientId;
         this.amount = amount;

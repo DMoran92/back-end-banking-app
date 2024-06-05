@@ -31,6 +31,8 @@ public class Customer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "CustomerId")
     private int customerId;
+    @Column(name = "Username")
+    private String username;
     @Column(name = "Password")
     private String password;
     /* todo: dob, idtype and idnumber missing in the db */
@@ -40,6 +42,9 @@ public class Customer {
     private String idType;
     @Column(name = "idNumber")
     private String idNumber;
+    @Column(name = "Role")
+    private String role;
+
 
     @OneToMany (fetch = FetchType.EAGER)
     @JoinColumn(name = "CustomerId", referencedColumnName = "CustomerId")
@@ -157,7 +162,6 @@ public class Customer {
         return countyState;
     }
 
-
     public void setAddrLine2(String addrLine2) {
         this.addrLine2 = addrLine2;
     }
@@ -172,6 +176,12 @@ public class Customer {
 
     public String getDob() { return dob; }
 
+    public String getUsername() { return username; }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
     public void setDob(String dob) { this.dob = dob; }
 
     public List<Account> getAccounts() {
@@ -181,4 +191,8 @@ public class Customer {
     public void setAccounts(List<Account> accounts) {
         this.accounts = accounts;
     }
+
+    public String getRoles() { return role; }
+
+    public void setRoles(String role) { this.role = role; }
 }
