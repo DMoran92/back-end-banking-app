@@ -38,6 +38,7 @@
             text-decoration:underline;
         }
         #sidebar-nav{
+            padding-top: 95px;
             width:260px;
             background-color:lightgrey;
         }
@@ -50,9 +51,11 @@
         .icon-100 { font-size: 100px; }
         .icon-200 { font-size: 200px; }
         .icon-300 { font-size: 300px; }
-
     </style>
     <script>
+        // Initialize a global variable to store the customerID
+        var customerID = null;
+
         // Function to make a fetch request with included credentials (cookies)
         // https://javascript.info/fetch-crossorigin#credentials
         // https://developer.mozilla.org/en-US/docs/Web/API/fetch#credentials
@@ -62,12 +65,25 @@
                 ...options,
                 credentials: 'include' // Ensure cookies are included in the request
             });
-            if (!response.ok) {
-                showErrorModal('Network response was not ok: ' + response.statusText); // will need to provide proper error msg
-                //throw new Error('Network response was not ok ' + response.statusText);
 
+            // This is done this way, because we either return json as a response or a string literal.
+            // You can only read the response body once, so we need to check the content type first and read the
+            // correct body type. If we try to parse json first and then if it fails read the string, its already empty
+            // and will fail.
+            // https://stackoverflow.com/questions/37121301/how-to-check-if-the-response-of-a-fetch-is-a-json-object-in-javascript
+            let responseBody;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                responseBody = await response.json(); // Attempt to parse the response as JSON
+            } else {
+                responseBody = await response.text(); // Fallback to text if JSON parsing fails
             }
-            return response.json();
+
+            if (!response.ok) {
+                showErrorModal('Network response was not ok: ' + response.statusText + ' - ' + responseBody);
+                throw new Error('Network response was not ok: ' + response.statusText + ' - ' + responseBody);
+            }
+            return responseBody;
         }
 
         async function loadDashboard() {
@@ -75,6 +91,8 @@
                 const data = await fetchWithToken('/dashboard/');
                 console.log('Fetched data:', data); // Log the fetched data for debugging
                 populateDashboard(data);
+                // Set the global customerID variable
+                customerID = data.customer.customerId;
             } catch (error) {
                 console.error('Error loading dashboard:', error);
                 alert('Failed to load dashboard!');
@@ -117,7 +135,63 @@
             errorModal.show();
         }
 
-        window.onload = loadDashboard;
+        async function addFavouritePayee(event) {
+            event.preventDefault();
+            const name = document.getElementById('payeeName').value;
+            const iban = document.getElementById('payeeIban').value;
+
+            try {
+                const response = await fetchWithToken(`/api/favourite-payees/add?customerId=${customerID}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: name, iban: iban })
+                });
+
+                await loadFavouritePayees(); // Refresh the list of favourite payees
+            } catch (error) {
+                console.error('Error adding payee:', error);
+                alert('add payee failed: ' + error.message);
+            }
+        }
+
+        async function removeFavouritePayee(payeeId) {
+            try {
+                const response = await fetchWithToken(`/api/favourite-payees/remove?payeeId=${payeeId}`, {
+                    method: 'DELETE',
+                });
+                await loadFavouritePayees(); // Refresh the list of favourite payees
+            } catch (error) {
+                console.error('Error removing payee:', error);
+                showErrorModal('Failed to remove favourite payee. Please try again later.')
+            }
+        }
+
+        async function loadFavouritePayees() {
+            try {
+                const data = await fetchWithToken('/api/favourite-payees');
+                populateFavouritePayees(data);
+            } catch (error) {
+                console.error('Error loading favourite payees:', error);
+                showErrorModal('Failed to remove favourite payee. Please try again later.')
+            }
+        }
+        function populateFavouritePayees(data) {
+            const payeesHtml = data.map(payee => `
+                <tr>
+                    <td>${payee.name}</td>
+                    <td>${payee.iban}</td>
+                    <td><button onclick="removeFavouritePayee(${payee.id})" class="btn btn-danger">Remove</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('favoritePayeesList').innerHTML = payeesHtml;
+        }
+
+        window.onload = function() {
+            loadDashboard();
+            loadFavouritePayees();
+        };
     </script>
 </head>
 
@@ -157,20 +231,15 @@
         <div class="col-auto px-0"  style="height: 100%">
             <div id="sidebar" class="collapse collapse-horizontal show border-end">
                 <div id="sidebar-nav" class="list-group border-0 rounded-0 text-sm-start min-vh-100" style="background-color: lightgrey">
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-question-diamond"></i> <span>Trasaction Enquiry</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-credit-card"></i> <span>Order a Credit/Debit Card</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-credit-card-fill"></i> <span>Request a Replacement Card</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-calendar"></i> <span>Item</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-envelope"></i> <span>Item</span></a>
+                    <a style="background-color:lightgrey" href="#home" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-house"></i> <span>Home</span></a>
+                    <a style="background-color:lightgrey" href="#transaction-enquiry" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-question-diamond"></i> <span>Transaction Enquiry</span></a>
+                    <a style="background-color:lightgrey" href="#transfer-funds" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
+                    <a style="background-color:lightgrey" href="#pay-bill" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
+                    <a style="background-color:lightgrey" href="#create-account" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
+                    <a style="background-color:lightgrey" href="#request-statements" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
+                    <a style="background-color:lightgrey" href="#order-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card"></i> <span>Order a Credit/Debit Card</span></a>
+                    <a style="background-color:lightgrey" href="#replace-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card-fill"></i> <span>Request a Replacement Card</span></a>
+                    <a style="background-color:lightgrey" href="#manage-payees" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-people"></i> <span>Manage Payees</span></a>
                 </div>
             </div>
         </div>
@@ -179,48 +248,105 @@
             <br/>
             <br/>
             <br/>
-            <div class="row">
-                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Customer Details</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Account Balance</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="customer-details">
-                                    <!-- Customer details will be populated here -->
-                                    </tbody>
-                                </table>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                    <div class="row">
+                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                            <div class="card">
+                                <h5 class="card-header">Customer Details</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>First Name</th>
+                                                <th>Last Name</th>
+                                                <th>Account Balance</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="customer-details">
+                                            <!-- Customer details will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                            <div class="card">
+                                <h5 class="card-header">Latest Transactions</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>Sender</th>
+                                                <th>Recipient</th>
+                                                <th>Amount Sent</th>
+                                                <th>Date & Time of Transaction</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="transactions">
+                                            <!-- Transactions will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Latest Transactions</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th>Sender</th>
-                                        <th>Recipient</th>
-                                        <th>Amount Sent</th>
-                                        <th>Date & Time of Transaction</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="transactions">
-                                    <!-- Transactions will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+
+                <div class="tab-pane fade" id="transaction-enquiry" role="tabpanel">
+                    <h2>Transaction Enquiry</h2>
+                    <p>Content for Transaction Enquiry</p>
+                </div>
+                <div class="tab-pane fade" id="transfer-funds" role="tabpanel">
+                    <h2>Transfer Funds</h2>
+                    <p>Content for Transfer Funds</p>
+                </div>
+                <div class="tab-pane fade" id="pay-bill" role="tabpanel">
+                    <h2>Pay a Bill</h2>
+                    <p>Content for Pay a Bill</p>
+                </div>
+                <div class="tab-pane fade" id="create-account" role="tabpanel">
+                    <h2>Create a New Account</h2>
+                    <p>Content for Create a New Account</p>
+                </div>
+                <div class="tab-pane fade" id="request-statements" role="tabpanel">
+                    <h2>Request Statements</h2>
+                    <p>Content for Request Statements</p>
+                </div>
+                <div class="tab-pane fade" id="order-card" role="tabpanel">
+                    <h2>Order a Credit/Debit Card</h2>
+                    <p>Content for Order a Credit/Debit Card</p>
+                </div>
+                <div class="tab-pane fade" id="replace-card" role="tabpanel">
+                    <h2>Request a Replacement Card</h2>
+                    <p>Content for Request a Replacement Card</p>
+                </div>
+                <div class="tab-pane fade" id="manage-payees" role="tabpanel">
+                    <h2>Add Favourite Payee</h2>
+                    <form id="addFavouritePayeeForm" onsubmit="addFavouritePayee(event)">
+                        <label for="payeeName">Name:</label>
+                        <input type="text" id="payeeName" name="payeeName" required>
+                        <label for="payeeIban">IBAN:</label>
+                        <input type="text" id="payeeIban" name="payeeIban" required>
+                        <button type="submit">Add Payee</button>
+                    </form>
+                    <h2>Favourite Payees</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>IBAN</th>
+                            </tr>
+                            </thead>
+                            <tbody id="favoritePayeesList">
+                            <!-- Favorite payees will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
