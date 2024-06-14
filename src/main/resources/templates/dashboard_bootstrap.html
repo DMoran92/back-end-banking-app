@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
-    <link rel="stylesheet" th:href="@{webjars/bootstrap/4.2.1/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{webjars/bootstrap/5.2.3/css/bootstrap.min.css}"/>
     <link rel="stylesheet" th:href="@{/css/main.css}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
@@ -188,9 +188,102 @@
             document.getElementById('favoritePayeesList').innerHTML = payeesHtml;
         }
 
+        async function loadCards() {
+            try {
+                const cards = await fetchWithToken('/api/cards', {
+                    method: 'GET'
+                });
+                const cardList = document.getElementById('cardList');
+                cardList.innerHTML = '';
+                cards.forEach(card => {
+                    let buttonsHtml;
+                    if (card.status === 'Stolen') {
+                        buttonsHtml = `
+                            <button class="btn btn-secondary" disabled>Freeze card</button>
+                            <button class="btn btn-secondary" disabled>Stolen</button>`;
+                    } else {
+                        const freezeButton = card.status === 'Frozen' ?
+                            `<button class="btn btn-success" onclick="unfreezeCard(${card.cardId})">Unfreeze Card</button>` :
+                            `<button class="btn btn-warning" onclick="freezeCard(${card.cardId})">Freeze Card</button>`;
+                        buttonsHtml = `
+                            ${freezeButton}
+                            <button class="btn btn-danger" onclick="reportStolen(${card.cardId})">Report Stolen</button>`;
+                    }
+                    cardList.innerHTML += `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <p class="card-text"><strong>Card Number:</strong> ${card.cardNumber}</p>
+                                <p class="card-text"><strong>Expiry Date:</strong> ${card.expiryDate}</p>
+                                <p class="card-text"><strong>Status:</strong> ${card.status}</p>
+                                ${buttonsHtml}
+                            </div>
+                        </div>
+                        `;
+                });
+            } catch (error) {
+                console.error('Error loading cards:', error);
+                showErrorModal('Failed to load cards {}', error);
+            }
+        }
+
+        async function orderNewCard() {
+            try {
+                const response = await fetchWithToken('/api/cards/order', {
+                    method: 'POST'
+                });
+                loadCards();
+            } catch (error) {
+                console.error('Error ordering new card:', error);
+                showErrorModal('Order new card failed: ' + error.message);
+            }
+        }
+
+        function showOrderCardConfirmation() {
+            const orderCardModal = new bootstrap.Modal(document.getElementById('orderCardModal'), {});
+            orderCardModal.show();
+        }
+
+        async function freezeCard(cardId) {
+            try {
+                await fetchWithToken(`/api/cards/freeze?id=${cardId}`, {
+                    method: 'PUT'
+                });
+                loadCards();
+            } catch (error) {
+                console.error('Error freezing card:', error);
+                showErrorModal('Failed to freeze card {}', error);
+            }
+        }
+
+        async function unfreezeCard(cardId) {
+            try {
+                await fetchWithToken(`/api/cards/unfreeze?id=${cardId}`, {
+                    method: 'PUT'
+                });
+                loadCards();
+            } catch (error) {
+                console.error('Error unfreezing card:', error);
+                showErrorModal('Failed to unfreeze card {}', error);
+            }
+        }
+
+        async function reportStolen(cardId) {
+            try {
+                await fetchWithToken(`/api/cards/report-stolen?id=${cardId}`, {
+                    method: 'PUT'
+                });
+                alert('Card reported stolen successfully');
+                loadCards();
+            } catch (error) {
+                console.error('Error reporting card stolen:', error);
+                showErrorModal('Failed to report stolen card {}', error);
+            }
+        }
+
         window.onload = function() {
             loadDashboard();
             loadFavouritePayees();
+            loadCards();
         };
     </script>
 </head>
@@ -237,8 +330,7 @@
                     <a style="background-color:lightgrey" href="#pay-bill" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
                     <a style="background-color:lightgrey" href="#create-account" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
                     <a style="background-color:lightgrey" href="#request-statements" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
-                    <a style="background-color:lightgrey" href="#order-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card"></i> <span>Order a Credit/Debit Card</span></a>
-                    <a style="background-color:lightgrey" href="#replace-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card-fill"></i> <span>Request a Replacement Card</span></a>
+                    <a style="background-color:lightgrey" href="#order-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card"></i> <span>Card Management</span></a>
                     <a style="background-color:lightgrey" href="#manage-payees" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-people"></i> <span>Manage Payees</span></a>
                 </div>
             </div>
@@ -317,14 +409,29 @@
                     <h2>Request Statements</h2>
                     <p>Content for Request Statements</p>
                 </div>
+                <!-- adding card management Order/Freeze/Report Stolen -->
                 <div class="tab-pane fade" id="order-card" role="tabpanel">
-                    <h2>Order a Credit/Debit Card</h2>
-                    <p>Content for Order a Credit/Debit Card</p>
+                    <p>Manage your payment cards below.</p>
+                    <!-- Section to display cards -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            Your Cards
+                        </div>
+                        <div class="card-body" id="cardList">
+                            <!-- Cards will be populated here -->
+                        </div>
+                    </div>
+                    <!-- Section to order a new card -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            Order New Card
+                        </div>
+                        <div class="card-body">
+                            <button type="button" class="btn btn-primary" onclick="showOrderCardConfirmation()">Order New Card</button>
+                        </div>
+                    </div>
                 </div>
-                <div class="tab-pane fade" id="replace-card" role="tabpanel">
-                    <h2>Request a Replacement Card</h2>
-                    <p>Content for Request a Replacement Card</p>
-                </div>
+
                 <div class="tab-pane fade" id="manage-payees" role="tabpanel">
                     <h2>Add Favourite Payee</h2>
                     <form id="addFavouritePayeeForm" onsubmit="addFavouritePayee(event)">
@@ -354,7 +461,29 @@
     </div>
 </div>
 
-<!-- Error Modal used to display errors -->
+
+<!-- Order Card Confirmation Modal -->
+<div class="modal fade" id="orderCardModal" tabindex="-1" aria-labelledby="orderCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderCardModalLabel">Order New Card</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to order a new card?</p>
+                <p>Charge: 9.99 Euro. Delivery: 5 working days.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Cancel</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="orderNewCard()" >Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Error Modal -->
 <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -366,13 +495,13 @@
                 <!-- Error message will be populated here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
             </div>
         </div>
     </div>
 </div>
 <!-- Load jQuery first -->
 <script src="/webjars/jquery/3.3.1/jquery.min.js"></script>
-<script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{webjars/bootstrap/5.2.3/js/bootstrap.min.js}"></script>
 </body>
 </html>
