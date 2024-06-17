@@ -4,11 +4,14 @@ import com.bankingapp.backend.model.Account;
 import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class NewAccountServiceImpl  implements NewAccountService {
@@ -48,6 +51,25 @@ public class NewAccountServiceImpl  implements NewAccountService {
     @Override
     public Account addNewAccount(Account account) {
         return accountRepository.save(account);
+    }
+
+    @Override
+    @Transactional
+    public Optional<Account> makeIban(Account account) {
+        int checkNum = (int) (account.getAccountId() % 97);
+        return accountRepository.findById(account.getAccountId()).map(target -> {
+            System.out.println("Setting new IBAN for " + account.getAccountId());
+            System.out.println("IE"+(new DecimalFormat("00").format(checkNum)+"BOGY"+913322+(new DecimalFormat("00000000").format(account.getAccountId()))));
+            target.setIban("IE"+(new DecimalFormat("00").format(checkNum)+"BOGY"+913322+(new DecimalFormat("00000000").format(account.getAccountId()))));
+            return target;
+        });
+        //DecimalFormat checkNumFormat = new DecimalFormat("00");
+        //DecimalFormat accountFormat = new DecimalFormat("00000000");
+        //System.out.println("Setting new IBAN for " + account.getAccountId());
+        //System.out.println("IE"+(new DecimalFormat("00").format(checkNum)+"BOGY"+913322+(new DecimalFormat("00000000").format(account.getAccountId()))));
+        //account.setIban("IE"+(new DecimalFormat("00").format(checkNum)+"BOGY"+913322+(new DecimalFormat("00000000").format(account.getAccountId()))));
+        //System.out.println("IE"+(new DecimalFormat("00").format(checkNum)+"BOGY"+913322+(new DecimalFormat("00000000").format(account.getAccountId()))));
+        //account.setIban("IE"+checkNum+"BOGY"+000000+""+account.getAccountId());
     }
 
 

@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://thymeleaf.org">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -95,17 +95,31 @@
                 console.error('Customer data is missing or malformed', data);
             }
 
+            let notNullRecipientIBAN = "";
             // Populate transactions
             if (data.accountTransactions) {
-                const transactionsHtml = data.accountTransactions.map(transaction => `
+                //if (!data.accountTransactions.map(transaction => transaction.recipientIBAN == null)){
+                  //  notNullRecipientIBAN = transaction.recipientIBAN;
+                    const outTransactionsHtml = data.accountTransactions.filter(t => t.recipientIBAN != null).map(transaction => `
+                        <tr>
+                            <td>${transaction.recipientIBAN}</td>
+                            <td>${transaction.amount}</td>
+                            <td>${transaction.timestamp}</td>
+                        </tr>
+                    `).join('');
+
+                //}
+
+                const inTransactionsHtml = data.accountTransactions.filter(t => t.senderIBAN != null).map(transaction => `
                     <tr>
-                        <td>${transaction.accountId}</td>
-                        <td>${transaction.recipientId}</td>
+                        <td>${transaction.senderIBAN}</td>
                         <td>${transaction.amount}</td>
                         <td>${transaction.timestamp}</td>
                     </tr>
                 `).join('');
-                document.getElementById('transactions').innerHTML = transactionsHtml;
+
+                document.getElementById('transactionsOut').innerHTML = outTransactionsHtml;
+                document.getElementById('transactionsIn').innerHTML = inTransactionsHtml;
             } else {
                 console.error('Transaction data is missing or malformed', data);
             }
@@ -115,6 +129,30 @@
             const errorModal = new bootstrap.Modal(document.getElementById('errorModal'), {});
             document.getElementById('errorModalBody').innerText = message;
             errorModal.show();
+        }
+
+        async function makeTransaction(event){
+            // prevent default submission behaviour
+            event.preventDefault();
+            // Get the customer ID and password from the form fields
+            const amount = document.getElementById('amount').value;
+            const recipientIBAN = document.getElementById('recipientIBAN').value;
+
+            // Make a POST request to the /api/authenticate endpoint
+            const response = await fetch('/dashboard/makeTransaction/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // Convert the username and password to a JSON string and include it in the request body
+                body: JSON.stringify({ amount: amount, recipientIBAN: recipientIBAN })
+            });
+            // If the response is OK, redirect to the dashboard page
+            if (response.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                alert('transfer failed');
+            }
         }
 
         window.onload = loadDashboard;
@@ -129,21 +167,12 @@
 
 <nav class="navbar navbar-expand-lg navbar-light fixed-top flex-md-nowrap p-0 shadow">
     <div class="container-fluid toolbars">
-        <a class="navbar-brand banner align-middle" href="#"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
+        <a class="navbar-brand banner align-middle" href="/"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active toolbar-item" aria-current="page" href="#">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link toolbar-item" href="#">Link</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled toolbar-item">Disabled</a>
-                </li>
             </ul>
             <form class="d-flex">
                 <input class="form-control me-2 toolbar-item" type="search" placeholder="Search" aria-label="Search">
@@ -163,14 +192,7 @@
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-question-diamond"></i> <span>Trasaction Enquiry</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-credit-card"></i> <span>Order a Credit/Debit Card</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-credit-card-fill"></i> <span>Request a Replacement Card</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-calendar"></i> <span>Item</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-envelope"></i> <span>Item</span></a>
+                    <a style="background-color:lightgrey" href="#" data-bs-toggle="modal" data-bs-target="#transferModal" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
                 </div>
             </div>
         </div>
@@ -203,19 +225,39 @@
                 </div>
                 <div class="col-12 col-xl-6 mb-4 mb-lg-0">
                     <div class="card">
-                        <h5 class="card-header">Latest Transactions</h5>
+                        <h5 class="card-header">Latest Outgoing Transactions</h5>
                         <div class="card-body">
                             <div class="table-responsive">
                                 <table class="table">
                                     <thead>
                                     <tr>
-                                        <th>Sender</th>
                                         <th>Recipient</th>
                                         <th>Amount Sent</th>
                                         <th>Date & Time of Transaction</th>
                                     </tr>
                                     </thead>
-                                    <tbody id="transactions">
+                                    <tbody id="transactionsOut">
+                                    <!-- Transactions will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                    <div class="card">
+                        <h5 class="card-header">Latest Incoming Transactions</h5>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Sent From</th>
+                                        <th>Amount Sent</th>
+                                        <th>Date & Time of Transaction</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="transactionsIn">
                                     <!-- Transactions will be populated here -->
                                     </tbody>
                                 </table>
@@ -226,8 +268,34 @@
             </div>
         </main>
     </div>
-</div>
 
+<div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="transferModalLabel">Send Money</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="makeTransactionForm" onsubmit="makeTransaction(event)">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount To Send</label>
+                        <input type="number" class="form-control" id="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recipientIBAN" class="form-label">Recipient IBAN</label>
+                        <input type="text" class="form-control" id="recipientIBAN" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+-->
 <!-- Error Modal used to display errors -->
 <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
     <div class="modal-dialog">

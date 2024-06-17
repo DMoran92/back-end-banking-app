@@ -43,6 +43,9 @@ public class RegisterController {
         Account newAccount = new Account(accountCustomerId, "Current", 0);
         newacc.addNewAccount(newAccount);
 
+        //create iban
+        //newAccount.setIban("Test");
+
         // Return the generated username
         Map<String, String> response = new HashMap<>();
         response.put("username", username);
