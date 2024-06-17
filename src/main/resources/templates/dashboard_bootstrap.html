@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
-<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -38,6 +38,7 @@
             text-decoration:underline;
         }
         #sidebar-nav{
+            padding-top: 95px;
             width:260px;
             background-color:lightgrey;
         }
@@ -53,6 +54,9 @@
 
     </style>
     <script>
+        // Initialize a global variable to store the customerID
+        var customerID = null;
+
         // Function to make a fetch request with included credentials (cookies)
         // https://javascript.info/fetch-crossorigin#credentials
         // https://developer.mozilla.org/en-US/docs/Web/API/fetch#credentials
@@ -62,12 +66,25 @@
                 ...options,
                 credentials: 'include' // Ensure cookies are included in the request
             });
-            if (!response.ok) {
-                showErrorModal('Network response was not ok: ' + response.statusText); // will need to provide proper error msg
-                //throw new Error('Network response was not ok ' + response.statusText);
 
+            // This is done this way, because we either return json as a response or a string literal.
+            // You can only read the response body once, so we need to check the content type first and read the
+            // correct body type. If we try to parse json first and then if it fails read the string, its already empty
+            // and will fail.
+            // https://stackoverflow.com/questions/37121301/how-to-check-if-the-response-of-a-fetch-is-a-json-object-in-javascript
+            let responseBody;
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                responseBody = await response.json(); // Attempt to parse the response as JSON
+            } else {
+                responseBody = await response.text(); // Fallback to text if JSON parsing fails
             }
-            return response.json();
+
+            if (!response.ok) {
+                showErrorModal('Network response was not ok: ' + response.statusText + ' - ' + responseBody);
+                throw new Error('Network response was not ok: ' + response.statusText + ' - ' + responseBody);
+            }
+            return responseBody;
         }
 
         async function loadDashboard() {
@@ -75,6 +92,8 @@
                 const data = await fetchWithToken('/dashboard/');
                 console.log('Fetched data:', data); // Log the fetched data for debugging
                 populateDashboard(data);
+                // Set the global customerID variable
+                customerID = data.customer.customerId;
             } catch (error) {
                 console.error('Error loading dashboard:', error);
                 alert('Failed to load dashboard!');
@@ -95,7 +114,6 @@
                 console.error('Customer data is missing or malformed', data);
             }
 
-            let notNullRecipientIBAN = "";
             // Populate transactions
             if (data.accountTransactions) {
                 //if (!data.accountTransactions.map(transaction => transaction.recipientIBAN == null)){
@@ -112,7 +130,8 @@
 
                 const inTransactionsHtml = data.accountTransactions.filter(t => t.senderIBAN != null).map(transaction => `
                     <tr>
-                        <td>${transaction.senderIBAN}</td>
+                        <td>${transaction.accountId}</td>
+                        <td>${transaction.recipientId}</td>
                         <td>${transaction.amount}</td>
                         <td>${transaction.timestamp}</td>
                     </tr>
@@ -131,6 +150,156 @@
             errorModal.show();
         }
 
+        async function addFavouritePayee(event) {
+            event.preventDefault();
+            const name = document.getElementById('payeeName').value;
+            const iban = document.getElementById('payeeIban').value;
+
+            try {
+                const response = await fetchWithToken(`/api/favourite-payees/add?customerId=${customerID}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: name, iban: iban })
+                });
+
+                await loadFavouritePayees(); // Refresh the list of favourite payees
+            } catch (error) {
+                console.error('Error adding payee:', error);
+                alert('add payee failed: ' + error.message);
+            }
+        }
+
+        async function removeFavouritePayee(payeeId) {
+            try {
+                const response = await fetchWithToken(`/api/favourite-payees/remove?payeeId=${payeeId}`, {
+                    method: 'DELETE',
+                });
+                await loadFavouritePayees(); // Refresh the list of favourite payees
+            } catch (error) {
+                console.error('Error removing payee:', error);
+                showErrorModal('Failed to remove favourite payee. Please try again later.')
+            }
+        }
+
+        async function loadFavouritePayees() {
+            try {
+                const data = await fetchWithToken('/api/favourite-payees');
+                populateFavouritePayees(data);
+            } catch (error) {
+                console.error('Error loading favourite payees:', error);
+                showErrorModal('Failed to remove favourite payee. Please try again later.')
+            }
+        }
+        function populateFavouritePayees(data) {
+            const payeesHtml = data.map(payee => `
+                <tr>
+                    <td>${payee.name}</td>
+                    <td>${payee.iban}</td>
+                    <td><button onclick="removeFavouritePayee(${payee.id})" class="btn btn-danger">Remove</button></td>
+                </tr>
+            `).join('');
+            document.getElementById('favoritePayeesList').innerHTML = payeesHtml;
+        }
+
+        async function loadCards() {
+            try {
+                const cards = await fetchWithToken('/api/cards', {
+                    method: 'GET'
+                });
+                const cardList = document.getElementById('cardList');
+                cardList.innerHTML = '';
+                cards.forEach(card => {
+                    let buttonsHtml;
+                    if (card.status === 'Stolen') {
+                        buttonsHtml = `
+                            <button class="btn btn-secondary" disabled>Freeze card</button>
+                            <button class="btn btn-secondary" disabled>Stolen</button>`;
+                    } else {
+                        const freezeButton = card.status === 'Frozen' ?
+                            `<button class="btn btn-success" onclick="unfreezeCard(${card.cardId})">Unfreeze Card</button>` :
+                            `<button class="btn btn-warning" onclick="freezeCard(${card.cardId})">Freeze Card</button>`;
+                        buttonsHtml = `
+                            ${freezeButton}
+                            <button class="btn btn-danger" onclick="reportStolen(${card.cardId})">Report Stolen</button>`;
+                    }
+                    cardList.innerHTML += `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <p class="card-text"><strong>Card Number:</strong> ${card.cardNumber}</p>
+                                <p class="card-text"><strong>Expiry Date:</strong> ${card.expiryDate}</p>
+                                <p class="card-text"><strong>Status:</strong> ${card.status}</p>
+                                ${buttonsHtml}
+                            </div>
+                        </div>
+                        `;
+                });
+            } catch (error) {
+                console.error('Error loading cards:', error);
+                showErrorModal('Failed to load cards {}', error);
+            }
+        }
+
+        async function orderNewCard() {
+            try {
+                const response = await fetchWithToken('/api/cards/order', {
+                    method: 'POST'
+                });
+                loadCards();
+            } catch (error) {
+                console.error('Error ordering new card:', error);
+                showErrorModal('Order new card failed: ' + error.message);
+            }
+        }
+
+        function showOrderCardConfirmation() {
+            const orderCardModal = new bootstrap.Modal(document.getElementById('orderCardModal'), {});
+            orderCardModal.show();
+        }
+
+        async function freezeCard(cardId) {
+            try {
+                await fetchWithToken(`/api/cards/freeze?id=${cardId}`, {
+                    method: 'PUT'
+                });
+                loadCards();
+            } catch (error) {
+                console.error('Error freezing card:', error);
+                showErrorModal('Failed to freeze card {}', error);
+            }
+        }
+
+        async function unfreezeCard(cardId) {
+            try {
+                await fetchWithToken(`/api/cards/unfreeze?id=${cardId}`, {
+                    method: 'PUT'
+                });
+                loadCards();
+            } catch (error) {
+                console.error('Error unfreezing card:', error);
+                showErrorModal('Failed to unfreeze card {}', error);
+            }
+        }
+
+        async function reportStolen(cardId) {
+            try {
+                await fetchWithToken(`/api/cards/report-stolen?id=${cardId}`, {
+                    method: 'PUT'
+                });
+                alert('Card reported stolen successfully');
+                loadCards();
+            } catch (error) {
+                console.error('Error reporting card stolen:', error);
+                showErrorModal('Failed to report stolen card {}', error);
+            }
+        }
+
+        window.onload = function() {
+            loadDashboard();
+            loadFavouritePayees();
+            loadCards();
+        };
         async function makeTransaction(event){
             // prevent default submission behaviour
             event.preventDefault();
@@ -167,12 +336,21 @@
 
 <nav class="navbar navbar-expand-lg navbar-light fixed-top flex-md-nowrap p-0 shadow">
     <div class="container-fluid toolbars">
-        <a class="navbar-brand banner align-middle" href="/"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
+        <a class="navbar-brand banner align-middle" href="#"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active toolbar-item" aria-current="page" href="#">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link toolbar-item" href="#">Link</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link disabled toolbar-item">Disabled</a>
+                </li>
             </ul>
             <form class="d-flex">
                 <input class="form-control me-2 toolbar-item" type="search" placeholder="Search" aria-label="Search">
@@ -186,6 +364,14 @@
         <div class="col-auto px-0"  style="height: 100%">
             <div id="sidebar" class="collapse collapse-horizontal show border-end">
                 <div id="sidebar-nav" class="list-group border-0 rounded-0 text-sm-start min-vh-100" style="background-color: lightgrey">
+                    <a style="background-color:lightgrey" href="#home" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-house"></i> <span>Home</span></a>
+                    <a style="background-color:lightgrey" href="#transaction-enquiry" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-question-diamond"></i> <span>Transaction Enquiry</span></a>
+                    <a style="background-color:lightgrey" href="#transfer-funds" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
+                    <a style="background-color:lightgrey" href="#pay-bill" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
+                    <a style="background-color:lightgrey" href="#create-account" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
+                    <a style="background-color:lightgrey" href="#request-statements" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
+                    <a style="background-color:lightgrey" href="#order-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card"></i> <span>Card Management</span></a>
+                    <a style="background-color:lightgrey" href="#manage-payees" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-people"></i> <span>Manage Payees</span></a>
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"></a>
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"></a>
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
@@ -203,25 +389,6 @@
             <br/>
             <div class="row">
                 <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Customer Details</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th>First Name</th>
-                                        <th>Last Name</th>
-                                        <th>Account Balance</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="customer-details">
-                                    <!-- Customer details will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
                 </div>
                 <div class="col-12 col-xl-6 mb-4 mb-lg-0">
                     <div class="card">
@@ -263,6 +430,123 @@
                                 </table>
                             </div>
                         </div>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
+                    <div class="row">
+                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                            <div class="card">
+                                <h5 class="card-header">Customer Details</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>First Name</th>
+                                                <th>Last Name</th>
+                                                <th>Account Balance</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="customer-details">
+                                            <!-- Customer details will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                            <div class="card">
+                                <h5 class="card-header">Latest Transactions</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>Sender</th>
+                                                <th>Recipient</th>
+                                                <th>Amount Sent</th>
+                                                <th>Date & Time of Transaction</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="transactions">
+                                            <!-- Transactions will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="transaction-enquiry" role="tabpanel">
+                    <h2>Transaction Enquiry</h2>
+                    <p>Content for Transaction Enquiry</p>
+                </div>
+                <div class="tab-pane fade" id="transfer-funds" role="tabpanel">
+                    <h2>Transfer Funds</h2>
+                    <p>Content for Transfer Funds</p>
+                </div>
+                <div class="tab-pane fade" id="pay-bill" role="tabpanel">
+                    <h2>Pay a Bill</h2>
+                    <p>Content for Pay a Bill</p>
+                </div>
+                <div class="tab-pane fade" id="create-account" role="tabpanel">
+                    <h2>Create a New Account</h2>
+                    <p>Content for Create a New Account</p>
+                </div>
+                <div class="tab-pane fade" id="request-statements" role="tabpanel">
+                    <h2>Request Statements</h2>
+                    <p>Content for Request Statements</p>
+                </div>
+                <!-- adding card management Order/Freeze/Report Stolen -->
+                <div class="tab-pane fade" id="order-card" role="tabpanel">
+                    <p>Manage your payment cards below.</p>
+                    <!-- Section to display cards -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            Your Cards
+                        </div>
+                        <div class="card-body" id="cardList">
+                            <!-- Cards will be populated here -->
+                        </div>
+                    </div>
+                    <!-- Section to order a new card -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            Order New Card
+                        </div>
+                        <div class="card-body">
+                            <button type="button" class="btn btn-primary" onclick="showOrderCardConfirmation()">Order New Card</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="manage-payees" role="tabpanel">
+                    <h2>Add Favourite Payee</h2>
+                    <form id="addFavouritePayeeForm" onsubmit="addFavouritePayee(event)">
+                        <label for="payeeName">Name:</label>
+                        <input type="text" id="payeeName" name="payeeName" required>
+                        <label for="payeeIban">IBAN:</label>
+                        <input type="text" id="payeeIban" name="payeeIban" required>
+                        <button type="submit">Add Payee</button>
+                    </form>
+                    <h2>Favourite Payees</h2>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>IBAN</th>
+                            </tr>
+                            </thead>
+                            <tbody id="favoritePayeesList">
+                            <!-- Favorite payees will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    </div>
+                    </div>
                     </div>
                 </div>
             </div>
@@ -295,6 +579,30 @@
         </div>
     </div>
 </div>
+
+
+<!-- Order Card Confirmation Modal -->
+<div class="modal fade" id="orderCardModal" tabindex="-1" aria-labelledby="orderCardModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="orderCardModalLabel">Order New Card</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to order a new card?</p>
+                <p>Charge: 9.99 Euro. Delivery: 5 working days.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Cancel</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="orderNewCard()" >Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Error Modal -->
 -->
 <!-- Error Modal used to display errors -->
 <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
@@ -308,7 +616,7 @@
                 <!-- Error message will be populated here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
             </div>
         </div>
     </div>
@@ -316,6 +624,7 @@
 <!-- Load jQuery first -->
 <script src="/webjars/jquery/3.3.1/jquery.min.js"></script>
 <script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
+<script type="text/javascript" th:src="@{webjars/bootstrap/5.2.3/js/bootstrap.min.js}"></script>
 </div>
 </body>
 </html>
