@@ -116,8 +116,6 @@
 
             // Populate transactions
             if (data.accountTransactions) {
-                //if (!data.accountTransactions.map(transaction => transaction.recipientIBAN == null)){
-                  //  notNullRecipientIBAN = transaction.recipientIBAN;
                     const outTransactionsHtml = data.accountTransactions.filter(t => t.recipientIBAN != null).map(transaction => `
                         <tr>
                             <td>${transaction.recipientIBAN}</td>
@@ -126,12 +124,9 @@
                         </tr>
                     `).join('');
 
-                //}
-
                 const inTransactionsHtml = data.accountTransactions.filter(t => t.senderIBAN != null).map(transaction => `
                     <tr>
-                        <td>${transaction.accountId}</td>
-                        <td>${transaction.recipientId}</td>
+                        <td>${transaction.senderIBAN}</td>
                         <td>${transaction.amount}</td>
                         <td>${transaction.timestamp}</td>
                     </tr>
@@ -295,11 +290,6 @@
             }
         }
 
-        window.onload = function() {
-            loadDashboard();
-            loadFavouritePayees();
-            loadCards();
-        };
         async function makeTransaction(event){
             // prevent default submission behaviour
             event.preventDefault();
@@ -324,7 +314,11 @@
             }
         }
 
-        window.onload = loadDashboard;
+        window.onload = function() {
+            loadDashboard();
+            //loadFavouritePayees();
+            //loadCards();
+        };
     </script>
 </head>
 
@@ -336,21 +330,12 @@
 
 <nav class="navbar navbar-expand-lg navbar-light fixed-top flex-md-nowrap p-0 shadow">
     <div class="container-fluid toolbars">
-        <a class="navbar-brand banner align-middle" href="#"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
+        <a class="navbar-brand banner align-middle" href="/"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active toolbar-item" aria-current="page" href="#">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link toolbar-item" href="#">Link</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled toolbar-item">Disabled</a>
-                </li>
             </ul>
             <form class="d-flex">
                 <input class="form-control me-2 toolbar-item" type="search" placeholder="Search" aria-label="Search">
@@ -365,18 +350,11 @@
             <div id="sidebar" class="collapse collapse-horizontal show border-end">
                 <div id="sidebar-nav" class="list-group border-0 rounded-0 text-sm-start min-vh-100" style="background-color: lightgrey">
                     <a style="background-color:lightgrey" href="#home" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-house"></i> <span>Home</span></a>
-                    <a style="background-color:lightgrey" href="#transaction-enquiry" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-question-diamond"></i> <span>Transaction Enquiry</span></a>
-                    <a style="background-color:lightgrey" href="#transfer-funds" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
                     <a style="background-color:lightgrey" href="#pay-bill" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
                     <a style="background-color:lightgrey" href="#create-account" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
                     <a style="background-color:lightgrey" href="#request-statements" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
                     <a style="background-color:lightgrey" href="#order-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card"></i> <span>Card Management</span></a>
                     <a style="background-color:lightgrey" href="#manage-payees" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-people"></i> <span>Manage Payees</span></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
-                    <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate h1" data-bs-parent="#sidebar"></a>
                     <a style="background-color:lightgrey" href="#" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-question-diamond"></i> <span>Trasaction Enquiry</span></a>
                     <a style="background-color:lightgrey" href="#" data-bs-toggle="modal" data-bs-target="#transferModal" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-parent="#sidebar"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
                 </div>
@@ -387,49 +365,10 @@
             <br/>
             <br/>
             <br/>
-            <div class="row">
+            <div class="tab-content">
                 <div class="col-12 col-xl-6 mb-4 mb-lg-0">
                 </div>
-                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Latest Outgoing Transactions</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th>Recipient</th>
-                                        <th>Amount Sent</th>
-                                        <th>Date & Time of Transaction</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="transactionsOut">
-                                    <!-- Transactions will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                    <div class="card">
-                        <h5 class="card-header">Latest Incoming Transactions</h5>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table">
-                                    <thead>
-                                    <tr>
-                                        <th>Sent From</th>
-                                        <th>Amount Sent</th>
-                                        <th>Date & Time of Transaction</th>
-                                    </tr>
-                                    </thead>
-                                    <tbody id="transactionsIn">
-                                    <!-- Transactions will be populated here -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+
             <div class="tab-content">
                 <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
                     <div class="row">
@@ -456,25 +395,44 @@
                         </div>
                         <div class="col-12 col-xl-6 mb-4 mb-lg-0">
                             <div class="card">
-                                <h5 class="card-header">Latest Transactions</h5>
+                                <h5 class="card-header">Latest Outgoing Transactions</h5>
                                 <div class="card-body">
                                     <div class="table-responsive">
                                         <table class="table">
                                             <thead>
                                             <tr>
-                                                <th>Sender</th>
                                                 <th>Recipient</th>
                                                 <th>Amount Sent</th>
                                                 <th>Date & Time of Transaction</th>
                                             </tr>
                                             </thead>
-                                            <tbody id="transactions">
+                                            <tbody id="transactionsOut">
                                             <!-- Transactions will be populated here -->
                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                            <div class="card">
+                                <h5 class="card-header">Latest Incoming Transactions</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>Sent From</th>
+                                                <th>Amount Sent</th>
+                                                <th>Date & Time of Transaction</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="transactionsIn">
+                                            <!-- Transactions will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -549,7 +507,6 @@
                     </div>
                     </div>
                 </div>
-            </div>
         </main>
     </div>
 
