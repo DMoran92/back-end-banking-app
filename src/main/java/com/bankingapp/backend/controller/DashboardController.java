@@ -5,6 +5,7 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.Transaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
+import com.bankingapp.backend.service.NewAccountServiceImpl;
 import com.bankingapp.backend.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,8 @@ public class DashboardController {
 
     @Autowired
     private CustomerRepository customerRepository;
+    @Autowired
+    private NewAccountServiceImpl newAccountServiceImpl;
 
     @GetMapping("/")
     public ResponseEntity<Map<String, Object>> getCustomerDashboard()  {
@@ -70,6 +73,18 @@ public class DashboardController {
         Map<String, Object> response = new HashMap<>();
         response.put("customer", customer);
         response.put("accountTransactions", accountTransactions);
+
+        List<Account> customerIbanAccounts = customer.getAccounts();
+
+        for (Account account : customerIbanAccounts) {
+            if (account.getIban() == null) {
+                newAccountServiceImpl.makeIban(account);
+            }
+            else{
+                System.out.println("THIS IS YOUR IBAN: "+account.getIban());
+            }
+        }
+
         return ResponseEntity.ok(response);
     }
     /* Exception handler that will catch all errors in DashboardController and return 500 with an error message
@@ -84,28 +99,70 @@ public class DashboardController {
     /*
     NOTE: this prop will need to be reworked when we start working with transactions on the new dashboard */
     @PostMapping("/makeTransaction/")
-    public String makeTransaction(@RequestParam double amount, @RequestParam long accountId, @RequestParam int recipientId){
+    public String makeTransaction(@RequestBody Map<String, Object> payload){
 
-        /* auth missing here */
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+
+        Customer customer = customerRepository.findByUsername(username);
+        List<Account> accounts = customer.getAccounts();
+        long accountId = accounts.get(0).getAccountId();
+        String senderIBAN = accounts.get(0).getIban();
+
+
+        logger.info("Your payload: {}", payload.toString());
+        double amount = Double.parseDouble(payload.get("amount").toString());
+        String recipientIBAN = payload.get("recipientIBAN").toString();
+        logger.info("amount: {}, accountId: {}, recipientIBAN: {}, senderIBAN: {}", amount, accountId, recipientIBAN, senderIBAN);
 
         //Make new transaction, get sender and recipient id, along with transaction time and date
-        Transaction transaction = new Transaction();
+        Transaction transactionOut = new Transaction();
+        Transaction transactionIn = new Transaction();
         Optional<Account> opSender = accountRepository.findById(accountId);
-        Optional<Account> opRecipient = accountRepository.findById((long) recipientId);
+        List<Account> opRecipient = accountRepository.findByIban(recipientIBAN);
         Account sender = opSender.get();
-        Account recipient = opRecipient.get();
+        Account recipient = opRecipient.get(0);
+        long recipientId = recipient.getAccountId();
         Date date = new Date();
 
         //set transaction info
-        transaction.setAccountId(accountId);
-        transaction.setRecipientId(recipientId);
-        transaction.setAmount(amount);
-        transaction.setTimestamp(new Timestamp(date.getTime()).toString());
+        transactionOut.setAccountId(sender.getAccountId());
+        transactionOut.setRecipientIBAN(recipientIBAN);
+        transactionOut.setAmount(amount);
+        transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
+
+        transactionIn.setAccountId(recipient.getAccountId());
+        transactionIn.setSenderIBAN(senderIBAN);
+        transactionIn.setAmount(amount);
+        transactionIn.setTimestamp(new Timestamp(date.getTime()).toString());
 
         //call methods to update the database
-        transactionService.sendMoney(sender, transaction, accountId);
-        transactionService.receiveMoney(recipient, transaction, recipientId);
-        transactionService.makeNewTransaction(transaction);
+        transactionService.sendMoney(sender, transactionOut, accountId);
+        transactionService.receiveMoney(recipient, transactionOut, recipientId);
+        transactionService.makeNewTransaction(transactionOut);
+        transactionService.makeNewTransaction(transactionIn);
         return "redirect:/";
+    }
+
+    @PostMapping("/makeAccount/")
+    public String makeAccount(@RequestBody Map<String, Object> payload){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+
+        Customer customer = customerRepository.findByUsername(username);
+        int customerId = customer.getCustomerId();
+
+
+
+        logger.info("Your payload: {}", payload.toString());
+        String accountType = payload.get("accountType").toString();
+        logger.info("accountType: {}", accountType);
+
+        Account newAccount = new Account(customerId, accountType, 0);
+        newAccountServiceImpl.addNewAccount(newAccount);
+
+        return "redirect:/dashboard";
     }
 }

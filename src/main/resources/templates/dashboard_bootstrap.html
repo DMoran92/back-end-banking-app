@@ -115,20 +115,29 @@
 
             // Populate transactions
             if (data.accountTransactions) {
-                const transactionsHtml = data.accountTransactions.map(transaction => `
+                const outTransactionsHtml = data.accountTransactions.filter(t => t.recipientIBAN != null).map(transaction => `
+                        <tr>
+                            <td>${transaction.recipientIBAN}</td>
+                            <td>${transaction.amount}</td>
+                            <td>${transaction.timestamp}</td>
+                        </tr>
+                    `).join('');
+
+                const inTransactionsHtml = data.accountTransactions.filter(t => t.senderIBAN != null).map(transaction => `
                     <tr>
-                        <td>${transaction.accountId}</td>
-                        <td>${transaction.recipientId}</td>
+                        <td>${transaction.senderIBAN}</td>
                         <td>${transaction.amount}</td>
                         <td>${transaction.timestamp}</td>
                     </tr>
                 `).join('');
-                document.getElementById('transactions').innerHTML = transactionsHtml;
+
+                document.getElementById('transactionsOut').innerHTML = outTransactionsHtml;
+                document.getElementById('transactionsIn').innerHTML = inTransactionsHtml;
             } else {
                 console.error('Transaction data is missing or malformed', data);
             }
         }
-        /* pop a error modal if something goes wrong, probably will need better error handling (more user friendly */
+        /* pop an error modal if something goes wrong, probably will need better error handling (more user friendly */
         function showErrorModal(message) {
             const errorModal = new bootstrap.Modal(document.getElementById('errorModal'), {});
             document.getElementById('errorModalBody').innerText = message;
@@ -280,6 +289,53 @@
             }
         }
 
+        async function makeTransaction(event){
+            // prevent default submission behaviour
+            event.preventDefault();
+            // Get the customer ID and password from the form fields
+            const amount = document.getElementById('amount').value;
+            const recipientIBAN = document.getElementById('recipientIBAN').value;
+
+            // Make a POST request to the /api/authenticate endpoint
+            const response = await fetch('/dashboard/makeTransaction/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // Convert the username and password to a JSON string and include it in the request body
+                body: JSON.stringify({ amount: amount, recipientIBAN: recipientIBAN })
+            });
+            // If the response is OK, redirect to the dashboard page
+            if (response.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                alert('transfer failed');
+            }
+        }
+
+        async function makeAccount(event){
+            // prevent default submission behaviour
+            event.preventDefault();
+            // Get the customer ID and password from the form fields
+            const accountType = document.getElementById('accountType').value;
+
+            // Make a POST request to the /api/authenticate endpoint
+            const response = await fetch('/dashboard/makeAccount/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                // Convert the username and password to a JSON string and include it in the request body
+                body: JSON.stringify({ accountType: accountType })
+            });
+            // If the response is OK, redirect to the dashboard page
+            if (response.ok) {
+                window.location.href = '/dashboard';
+            } else {
+                alert('creation failed');
+            }
+        }
+
         window.onload = function() {
             loadDashboard();
             loadFavouritePayees();
@@ -296,21 +352,12 @@
 
 <nav class="navbar navbar-expand-lg navbar-light fixed-top flex-md-nowrap p-0 shadow">
     <div class="container-fluid toolbars">
-        <a class="navbar-brand banner align-middle" href="#"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
+        <a class="navbar-brand banner align-middle" href="/"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active toolbar-item" aria-current="page" href="#">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link toolbar-item" href="#">Link</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled toolbar-item">Disabled</a>
-                </li>
             </ul>
             <form class="d-flex">
                 <input class="form-control me-2 toolbar-item" type="search" placeholder="Search" aria-label="Search">
@@ -364,38 +411,68 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                            <div class="card">
-                                <h5 class="card-header">Latest Transactions</h5>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table">
-                                            <thead>
-                                            <tr>
-                                                <th>Sender</th>
-                                                <th>Recipient</th>
-                                                <th>Amount Sent</th>
-                                                <th>Date & Time of Transaction</th>
-                                            </tr>
-                                            </thead>
-                                            <tbody id="transactions">
-                                            <!-- Transactions will be populated here -->
-                                            </tbody>
-                                        </table>
-                                    </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="transaction-enquiry" role="tabpanel">
+                    <h2>Transaction Enquiry</h2><div class="row">
+                    <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                        <div class="card">
+                            <h5 class="card-header">Latest Outgoing Transactions</h5>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Recipient</th>
+                                            <th>Amount Sent</th>
+                                            <th>Date & Time of Transaction</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="transactionsOut">
+                                        <!-- Transactions will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+                        <div class="card">
+                            <h5 class="card-header">Latest Incoming Transactions</h5>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                        <tr>
+                                            <th>Sent From</th>
+                                            <th>Amount Sent</th>
+                                            <th>Date & Time of Transaction</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody id="transactionsIn">
+                                        <!-- Transactions will be populated here -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="tab-pane fade" id="transaction-enquiry" role="tabpanel">
-                    <h2>Transaction Enquiry</h2>
-                    <p>Content for Transaction Enquiry</p>
                 </div>
                 <div class="tab-pane fade" id="transfer-funds" role="tabpanel">
                     <h2>Transfer Funds</h2>
-                    <p>Content for Transfer Funds</p>
+                    <form id="makeTransactionForm" onsubmit="makeTransaction(event)">
+                        <div class="mb-3">
+                            <label for="amount" class="form-label">Amount To Send</label>
+                            <input type="number" class="form-control" id="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="recipientIBAN" class="form-label">Recipient IBAN</label>
+                            <input type="text" class="form-control" id="recipientIBAN" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
                 </div>
                 <div class="tab-pane fade" id="pay-bill" role="tabpanel">
                     <h2>Pay a Bill</h2>
@@ -403,7 +480,13 @@
                 </div>
                 <div class="tab-pane fade" id="create-account" role="tabpanel">
                     <h2>Create a New Account</h2>
-                    <p>Content for Create a New Account</p>
+                    <form id="makeAccountForm" onsubmit="makeAccount(event)">
+                        <div class="mb-3">
+                            <label for="accountType" class="form-label">Enter Account Type To Make</label>
+                            <input type="text" class="form-control" id="accountType" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
                 </div>
                 <div class="tab-pane fade" id="request-statements" role="tabpanel">
                     <h2>Request Statements</h2>

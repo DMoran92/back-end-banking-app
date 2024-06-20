@@ -11,19 +11,21 @@ public class Transaction {
     private int transactionId;
     @Column(name = "AccountId")
     private long accountId;
-    @Column(name = "RecipientId")
-    private int recipientId;
+    @Column(name = "RecipientIBAN")
+    private String recipientIBAN;
     @Column(name = "Amount")
     private double amount;
     @Column(name = "Timestamp")
     private String timestamp;
+    @Column(name = "SenderIBAN")
+    private String senderIBAN;
 
     public Transaction() {
     }
 
-    public Transaction(long accountId, int recipientId, double amount, String timestamp) {
+    public Transaction(long accountId, String recipientIBAN, double amount, String timestamp) {
         this.accountId = accountId;
-        this.recipientId = recipientId;
+        this.recipientIBAN = recipientIBAN;
         this.amount = amount;
         this.timestamp = timestamp;
     }
@@ -44,12 +46,12 @@ public class Transaction {
         this.accountId = accountId;
     }
 
-    public int getRecipientId() {
-        return recipientId;
+    public String getRecipientIBAN() {
+        return recipientIBAN;
     }
 
-    public void setRecipientId(int recipientId) {
-        this.recipientId = recipientId;
+    public void setRecipientIBAN(String recipientIBAN) {
+        this.recipientIBAN = recipientIBAN;
     }
 
     public double getAmount() {
@@ -66,5 +68,13 @@ public class Transaction {
 
     public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public String getSenderIBAN() {
+        return senderIBAN;
+    }
+
+    public void setSenderIBAN(String senderIBAN) {
+        this.senderIBAN = senderIBAN;
     }
 }

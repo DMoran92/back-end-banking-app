@@ -18,6 +18,8 @@ public class Account {
     private String accountType;
     @Column(name = "Balance")
     private double balance;
+    @Column(name = "IBAN")
+    private String iban;
 
     @OneToMany (fetch = FetchType.EAGER)
     @JoinColumn(name = "AccountId", referencedColumnName = "AccountId")
@@ -64,6 +66,10 @@ public class Account {
     public void setBalance(double balance) {
         this.balance = balance;
     }
+
+    public String getIban() {return iban;}
+
+    public void setIban(String iban) {this.iban = iban; }
 
 
     public List<Transaction> getTransactions() {
