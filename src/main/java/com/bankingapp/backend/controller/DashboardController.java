@@ -98,52 +98,7 @@ public class DashboardController {
     }
     /*
     NOTE: this prop will need to be reworked when we start working with transactions on the new dashboard */
-    @PostMapping("/makeTransaction/")
-    public String makeTransaction(@RequestBody Map<String, Object> payload){
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        String username = userDetails.getUsername();
-
-        Customer customer = customerRepository.findByUsername(username);
-        List<Account> accounts = customer.getAccounts();
-        long accountId = accounts.get(0).getAccountId();
-        String senderIBAN = accounts.get(0).getIban();
-
-
-        logger.info("Your payload: {}", payload.toString());
-        double amount = Double.parseDouble(payload.get("amount").toString());
-        String recipientIBAN = payload.get("recipientIBAN").toString();
-        logger.info("amount: {}, accountId: {}, recipientIBAN: {}, senderIBAN: {}", amount, accountId, recipientIBAN, senderIBAN);
-
-        //Make new transaction, get sender and recipient id, along with transaction time and date
-        Transaction transactionOut = new Transaction();
-        Transaction transactionIn = new Transaction();
-        Optional<Account> opSender = accountRepository.findById(accountId);
-        List<Account> opRecipient = accountRepository.findByIban(recipientIBAN);
-        Account sender = opSender.get();
-        Account recipient = opRecipient.get(0);
-        long recipientId = recipient.getAccountId();
-        Date date = new Date();
-
-        //set transaction info
-        transactionOut.setAccountId(sender.getAccountId());
-        transactionOut.setRecipientIBAN(recipientIBAN);
-        transactionOut.setAmount(amount);
-        transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
-
-        transactionIn.setAccountId(recipient.getAccountId());
-        transactionIn.setSenderIBAN(senderIBAN);
-        transactionIn.setAmount(amount);
-        transactionIn.setTimestamp(new Timestamp(date.getTime()).toString());
-
-        //call methods to update the database
-        transactionService.sendMoney(sender, transactionOut, accountId);
-        transactionService.receiveMoney(recipient, transactionOut, recipientId);
-        transactionService.makeNewTransaction(transactionOut);
-        transactionService.makeNewTransaction(transactionIn);
-        return "redirect:/";
-    }
 
     @PostMapping("/makeAccount/")
     public String makeAccount(@RequestBody Map<String, Object> payload){

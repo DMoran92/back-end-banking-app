@@ -297,7 +297,7 @@
             const recipientIBAN = document.getElementById('recipientIBAN').value;
 
             // Make a POST request to the /api/authenticate endpoint
-            const response = await fetch('/dashboard/makeTransaction/', {
+            const response = await fetch('/transaction/makeTransaction/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
