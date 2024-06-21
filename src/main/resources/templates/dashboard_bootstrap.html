@@ -119,14 +119,16 @@
                         <tr>
                             <td>${transaction.recipientIBAN}</td>
                             <td>${transaction.amount}</td>
+                            <td>${transaction.category}</td>
                             <td>${transaction.timestamp}</td>
                         </tr>
                     `).join('');
 
                 const inTransactionsHtml = data.accountTransactions.filter(t => t.senderIBAN != null).map(transaction => `
                     <tr>
-                        <td>${transaction.senderIBAN}</td>
+                        <td>${transaction.senderName}</td>
                         <td>${transaction.amount}</td>
+                        <td>${transaction.category}</td>
                         <td>${transaction.timestamp}</td>
                     </tr>
                 `).join('');
@@ -294,6 +296,7 @@
             event.preventDefault();
             // Get the customer ID and password from the form fields
             const amount = document.getElementById('amount').value;
+            const category = document.getElementById('category').value;
             const recipientIBAN = document.getElementById('recipientIBAN').value;
 
             // Make a POST request to the /api/authenticate endpoint
@@ -303,7 +306,7 @@
                     'Content-Type': 'application/json'
                 },
                 // Convert the username and password to a JSON string and include it in the request body
-                body: JSON.stringify({ amount: amount, recipientIBAN: recipientIBAN })
+                body: JSON.stringify({ amount: amount, recipientIBAN: recipientIBAN, category: category })
             });
             // If the response is OK, redirect to the dashboard page
             if (response.ok) {
@@ -338,8 +341,8 @@
 
         window.onload = function() {
             loadDashboard();
-            loadFavouritePayees();
-            loadCards();
+            //loadFavouritePayees();
+            //loadCards();
         };
     </script>
 </head>
@@ -426,6 +429,7 @@
                                         <tr>
                                             <th>Recipient</th>
                                             <th>Amount Sent</th>
+                                            <th>Category</th>
                                             <th>Date & Time of Transaction</th>
                                         </tr>
                                         </thead>
@@ -446,7 +450,8 @@
                                         <thead>
                                         <tr>
                                             <th>Sent From</th>
-                                            <th>Amount Sent</th>
+                                            <th>Amount Received</th>
+                                            <th>Category</th>
                                             <th>Date & Time of Transaction</th>
                                         </tr>
                                         </thead>
@@ -466,6 +471,10 @@
                         <div class="mb-3">
                             <label for="amount" class="form-label">Amount To Send</label>
                             <input type="number" class="form-control" id="amount" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Transaction Category</label>
+                            <input type="text" class="form-control" id="category" required>
                         </div>
                         <div class="mb-3">
                             <label for="recipientIBAN" class="form-label">Recipient IBAN</label>

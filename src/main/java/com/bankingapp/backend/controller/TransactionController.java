@@ -59,7 +59,8 @@ public class TransactionController {
         logger.info("Your payload: {}", payload.toString());
         double amount = Double.parseDouble(payload.get("amount").toString());
         String recipientIBAN = payload.get("recipientIBAN").toString();
-        logger.info("amount: {}, accountId: {}, recipientIBAN: {}, senderIBAN: {}", amount, accountId, recipientIBAN, senderIBAN);
+        String category = payload.get("category").toString();
+        logger.info("amount: {}, accountId: {}, recipientIBAN: {}, senderIBAN: {}, category: {}", amount, accountId, recipientIBAN, senderIBAN, category);
 
         //Make new transaction, get sender and recipient id, along with transaction time and date
         Transaction transactionOut = new Transaction();
@@ -79,6 +80,7 @@ public class TransactionController {
             transactionOut.setRecipientIBAN(recipientIBAN);
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
+            transactionOut.setCategory(category);
 
             transactionService.sendMoney(sender, transactionOut, accountId);
             transactionService.makeNewTransaction(transactionOut);
@@ -96,12 +98,16 @@ public class TransactionController {
             transactionOut.setRecipientIBAN(recipientIBAN);
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
+            transactionOut.setCategory(category);
 
             //set transaction info for recipient
             transactionIn.setAccountId(recipient.getAccountId());
             transactionIn.setSenderIBAN(senderIBAN);
             transactionIn.setAmount(amount);
             transactionIn.setTimestamp(new Timestamp(date.getTime()).toString());
+            transactionIn.setSenderName(customer.getFirstName() + " " + customer.getLastName());
+            transactionIn.setCategory(category);
+
 
             //call methods to update the database
             transactionService.sendMoney(sender, transactionOut, accountId);
