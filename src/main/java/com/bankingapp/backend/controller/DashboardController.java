@@ -69,6 +69,7 @@ public class DashboardController {
         /* prep the response with customer object and transactions */
         Map<String, Object> response = new HashMap<>();
         response.put("customer", customer);
+        response.put("accounts",accounts);
         response.put("accountTransactions", accountTransactions);
         return ResponseEntity.ok(response);
     }
