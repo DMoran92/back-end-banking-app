@@ -67,10 +67,9 @@ public class Account {
         this.balance = balance;
     }
 
-    public String getIban() {return iban;}
+    public String getIban() { return iban; }
 
-    public void setIban(String iban) {this.iban = iban; }
-
+    public void setIban(String iban) { this.iban = iban; }
 
     public List<Transaction> getTransactions() {
         return transactions;

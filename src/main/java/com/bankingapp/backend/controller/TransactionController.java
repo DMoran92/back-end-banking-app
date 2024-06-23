@@ -5,7 +5,6 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.Transaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
-import com.bankingapp.backend.service.NewAccountServiceImpl;
 import com.bankingapp.backend.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,8 +27,7 @@ import java.util.Optional;
 @RequestMapping("/transaction")
 public class TransactionController {
 
-    private static final Logger logger = LoggerFactory.getLogger(DashboardController.class);
-
+    private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
 
     @Autowired
     private TransactionService transactionService;
@@ -37,11 +35,8 @@ public class TransactionController {
     @Autowired
     private AccountRepository accountRepository;
 
-
     @Autowired
     private CustomerRepository customerRepository;
-    @Autowired
-    private NewAccountServiceImpl newAccountServiceImpl;
 
     @PostMapping("/makeTransaction/")
     public String makeTransaction(@RequestBody Map<String, Object> payload){
@@ -108,14 +103,12 @@ public class TransactionController {
             transactionIn.setSenderName(customer.getFirstName() + " " + customer.getLastName());
             transactionIn.setCategory(category);
 
-
             //call methods to update the database
             transactionService.sendMoney(sender, transactionOut, accountId);
             transactionService.receiveMoney(recipient, transactionOut, recipientId);
             transactionService.makeNewTransaction(transactionOut);
             transactionService.makeNewTransaction(transactionIn);
         }
-
         return "redirect:/";
     }
 }
