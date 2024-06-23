@@ -55,6 +55,13 @@ public class TransactionController {
         double amount = Double.parseDouble(payload.get("amount").toString());
         String recipientIBAN = payload.get("recipientIBAN").toString();
         String category = payload.get("category").toString();
+        String recipientName = null;
+        try {
+            recipientName = payload.get("recipientName").toString();
+        } catch(Exception e){
+            logger.info("recipient name not set, setting to unknown");
+            recipientName = "Unknown";
+        }
         logger.info("amount: {}, accountId: {}, recipientIBAN: {}, senderIBAN: {}, category: {}", amount, accountId, recipientIBAN, senderIBAN, category);
 
         //Make new transaction, get sender and recipient id, along with transaction time and date
@@ -76,6 +83,7 @@ public class TransactionController {
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
             transactionOut.setCategory(category);
+            transactionOut.setRecipientName(recipientName);
 
             transactionService.sendMoney(sender, transactionOut, accountId);
             transactionService.makeNewTransaction(transactionOut);
@@ -94,6 +102,7 @@ public class TransactionController {
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
             transactionOut.setCategory(category);
+            transactionOut.setRecipientName(recipientName);
 
             //set transaction info for recipient
             transactionIn.setAccountId(recipient.getAccountId());

@@ -11,6 +11,8 @@ public class Transaction {
     private int transactionId;
     @Column(name = "AccountId")
     private long accountId;
+    @Column(name = "RecipientName")
+    private String recipientName;
     @Column(name = "RecipientIBAN")
     private String recipientIBAN;
     @Column(name = "Amount")
@@ -49,6 +51,14 @@ public class Transaction {
 
     public void setAccountId(long accountId) {
         this.accountId = accountId;
+    }
+
+    public String getRecipientName() {
+        return recipientName;
+    }
+
+    public void setRecipientName(String recipientName) {
+        this.recipientName = recipientName;
     }
 
     public String getRecipientIBAN() {
