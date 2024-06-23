@@ -5,6 +5,7 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.Transaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
+import com.bankingapp.backend.service.NewAccountServiceImpl;
 import com.bankingapp.backend.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,8 @@ public class DashboardController {
 
     @Autowired
     private CustomerRepository customerRepository;
+    @Autowired
+    private NewAccountServiceImpl newAccountServiceImpl;
 
     @GetMapping("/")
     public ResponseEntity<Map<String, Object>> getCustomerDashboard()  {
@@ -71,6 +74,18 @@ public class DashboardController {
         response.put("customer", customer);
         response.put("accounts",accounts);
         response.put("accountTransactions", accountTransactions);
+
+        List<Account> customerIbanAccounts = customer.getAccounts();
+
+        for (Account account : customerIbanAccounts) {
+            if (account.getIban() == null) {
+                newAccountServiceImpl.makeIban(account);
+            }
+            else{
+                System.out.println("THIS IS YOUR IBAN: "+account.getIban());
+            }
+        }
+
         return ResponseEntity.ok(response);
     }
     /* Exception handler that will catch all errors in DashboardController and return 500 with an error message
@@ -84,29 +99,26 @@ public class DashboardController {
     }
     /*
     NOTE: this prop will need to be reworked when we start working with transactions on the new dashboard */
-    @PostMapping("/makeTransaction/")
-    public String makeTransaction(@RequestParam double amount, @RequestParam long accountId, @RequestParam int recipientId){
 
-        /* auth missing here */
 
-        //Make new transaction, get sender and recipient id, along with transaction time and date
-        Transaction transaction = new Transaction();
-        Optional<Account> opSender = accountRepository.findById(accountId);
-        Optional<Account> opRecipient = accountRepository.findById((long) recipientId);
-        Account sender = opSender.get();
-        Account recipient = opRecipient.get();
-        Date date = new Date();
+    @PostMapping("/makeAccount/")
+    public String makeAccount(@RequestBody Map<String, Object> payload){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
 
-        //set transaction info
-        transaction.setAccountId(accountId);
-        transaction.setRecipientId(recipientId);
-        transaction.setAmount(amount);
-        transaction.setTimestamp(new Timestamp(date.getTime()).toString());
+        Customer customer = customerRepository.findByUsername(username);
+        int customerId = customer.getCustomerId();
 
-        //call methods to update the database
-        transactionService.sendMoney(sender, transaction, accountId);
-        transactionService.receiveMoney(recipient, transaction, recipientId);
-        transactionService.makeNewTransaction(transaction);
-        return "redirect:/";
+
+
+        logger.info("Your payload: {}", payload.toString());
+        String accountType = payload.get("accountType").toString();
+        logger.info("accountType: {}", accountType);
+
+        Account newAccount = new Account(customerId, accountType, 0);
+        newAccountServiceImpl.addNewAccount(newAccount);
+
+        return "redirect:/dashboard";
     }
 }
