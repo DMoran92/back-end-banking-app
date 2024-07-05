@@ -9,6 +9,8 @@ import com.bankingapp.backend.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,11 +19,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.bankingapp.backend.utilities.Utils.getAuthenticatedUsername;
 
 @RestController
 @RequestMapping("/transaction")
@@ -39,35 +44,40 @@ public class TransactionController {
     private CustomerRepository customerRepository;
 
     @PostMapping("/makeTransaction/")
-    public String makeTransaction(@RequestBody Map<String, Object> payload){
+    public ResponseEntity<String> makeTransaction(@RequestBody Map<String, Object> payload){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();
 
         Customer customer = customerRepository.findByUsername(username);
-        List<Account> accounts = customer.getAccounts();
-        long accountId = accounts.get(0).getAccountId();
-        String senderIBAN = accounts.get(0).getIban();
+        long accountId = Long.parseLong(payload.get("accountId").toString());
+        Optional<Account> opSender = customer.getAccounts().stream().filter(acc -> acc.getAccountId() == accountId).findFirst();
 
+        if (!opSender.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Account not found");
+        }
+
+        Account senderAccount = opSender.get();
+        String senderIBAN = senderAccount.getIban();
 
         logger.info("Your payload: {}", payload.toString());
         double amount = Double.parseDouble(payload.get("amount").toString());
         String recipientIBAN = payload.get("recipientIBAN").toString();
         String category = payload.get("category").toString();
-        String recipientName = null;
-        try {
-            recipientName = payload.get("recipientName").toString();
-        } catch(Exception e){
-            logger.info("recipient name not set, setting to unknown");
-            recipientName = "Unknown";
-        }
+        String recipientName = payload.getOrDefault("recipientName", "Unknown").toString();
+
         logger.info("amount: {}, accountId: {}, recipientIBAN: {}, senderIBAN: {}, category: {}", amount, accountId, recipientIBAN, senderIBAN, category);
+
+
+        // Check if the sender has sufficient balance
+        if (senderAccount.getBalance() < amount) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Insufficient balance");
+        }
 
         //Make new transaction, get sender and recipient id, along with transaction time and date
         Transaction transactionOut = new Transaction();
         Transaction transactionIn = new Transaction();
-        Optional<Account> opSender = accountRepository.findById(accountId);
         List<Account> opRecipient = accountRepository.findByIban(recipientIBAN);
 
         //check if recipient IBAN is in the system
@@ -75,29 +85,29 @@ public class TransactionController {
             System.out.println("No recipient found for IBAN: " + recipientIBAN);
 
             //Create transaction for sender
-            Account sender = opSender.get();
             Date date = new Date();
 
-            transactionOut.setAccountId(sender.getAccountId());
+            transactionOut.setAccountId(senderAccount.getAccountId());
             transactionOut.setRecipientIBAN(recipientIBAN);
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
             transactionOut.setCategory(category);
             transactionOut.setRecipientName(recipientName);
-
-            transactionService.sendMoney(sender, transactionOut, accountId);
+            transactionOut.setSenderIBAN(senderIBAN);
+            transactionOut.setSenderName(customer.getFirstName() + " " + customer.getLastName());
+            logger.info("Your sender: {}, transactionOut: {}, accountId: {}", senderAccount, transactionOut, accountId);
+            transactionService.sendMoney(senderAccount, transactionOut, accountId);
             transactionService.makeNewTransaction(transactionOut);
         }
         else{
             System.out.println("Recipient found for IBAN: " + recipientIBAN);
 
-            Account sender = opSender.get();
             Account recipient = opRecipient.get(0);
             long recipientId = recipient.getAccountId();
             Date date = new Date();
 
             //set transaction info for sender
-            transactionOut.setAccountId(sender.getAccountId());
+            transactionOut.setAccountId(senderAccount.getAccountId());
             transactionOut.setRecipientIBAN(recipientIBAN);
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
@@ -113,11 +123,86 @@ public class TransactionController {
             transactionIn.setCategory(category);
 
             //call methods to update the database
-            transactionService.sendMoney(sender, transactionOut, accountId);
+            logger.info("Your sender: {}, transactionOut: {}, accountId: {}", senderAccount, transactionOut, accountId);
+            transactionService.sendMoney(senderAccount, transactionOut, accountId);
             transactionService.receiveMoney(recipient, transactionOut, recipientId);
             transactionService.makeNewTransaction(transactionOut);
             transactionService.makeNewTransaction(transactionIn);
         }
-        return "redirect:/";
+        return ResponseEntity.ok("Transaction successful");
+    }
+
+    @PostMapping("/deposit")
+    public ResponseEntity<String> deposit(@RequestBody Map<String, Object> payload) {
+
+        /* get customer based on the username */
+        String username = getAuthenticatedUsername();
+        Customer customer = customerRepository.findByUsername(username);
+
+        /* extract account ID and amount from the payload */
+        long accountId = Long.parseLong(payload.get("accountId").toString());
+        double amount = Double.parseDouble(payload.get("amount").toString());
+        logger.info("accountId: {}, amount: {}", accountId, amount);
+        /* Find the account using account ID */
+        Optional<Account> opAccount = customer.getAccounts().stream().filter(acc -> acc.getAccountId() == accountId).findFirst();
+        if (opAccount.isPresent()) {
+            /* perform deposit */
+            transactionService.deposit(opAccount.get(), amount);
+            logger.info("Deposit successful");
+
+            /* Create transaction */
+            Transaction transaction = new Transaction();
+            transaction.setAccountId(accountId);
+            transaction.setSenderName("Cash Deposit");
+            transaction.setSenderIBAN(opAccount.get().getIban());
+            transaction.setAmount(amount);
+            transaction.setTimestamp(new Timestamp(new Date().getTime()).toString());
+            transaction.setCategory("Cash Deposit");
+            transactionService.makeNewTransaction(transaction);
+
+            return ResponseEntity.ok("Deposit successful");
+        } else {
+            logger.info("Deposit failed");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found");
+        }
+    }
+
+    @PostMapping("/withdraw")
+    public ResponseEntity<String> withdraw(@RequestBody Map<String, Object> payload) {
+
+        /* get customer based on the username */
+        String username = getAuthenticatedUsername();
+        Customer customer = customerRepository.findByUsername(username);
+        /* extract account ID and amount from the payload */
+        long accountId = Long.parseLong(payload.get("accountId").toString());
+        double amount = Double.parseDouble(payload.get("amount").toString());
+        logger.info("accountId: {}, amount: {}", accountId, amount);
+        /* Find the account using account ID */
+        Optional<Account> opAccount = customer.getAccounts().stream().filter(acc -> acc.getAccountId() == accountId).findFirst();
+        if (opAccount.isPresent()) {
+            try {
+                /* perform withdrawal */
+                transactionService.withdraw(opAccount.get(), amount);
+                logger.info("Withdraw successfull");
+
+                /* Create transaction */
+                Transaction transaction = new Transaction();
+                transaction.setAccountId(accountId);
+                transaction.setRecipientName("Cash Withdrawal");
+                transaction.setRecipientIBAN(opAccount.get().getIban());
+                transaction.setAmount(amount);
+                transaction.setTimestamp(new Timestamp(new Date().getTime()).toString());
+                transaction.setCategory("Cash Withdrawal");
+                transactionService.makeNewTransaction(transaction);
+
+                return ResponseEntity.ok("Withdrawal successful");
+            } catch (RuntimeException e) {
+                logger.info("Withdraw failed: {}", e.getMessage());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+            }
+        } else {
+            logger.info("Withdraw failed");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found");
+        }
     }
 }

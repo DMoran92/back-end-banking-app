@@ -4,657 +4,80 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" th:href="@{webjars/bootstrap/5.2.3/css/bootstrap.min.css}"/>
     <link rel="stylesheet" th:href="@{/css/main.css}"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-    <style>
-        body{
-            /*padding-top: 50px;*/
-            background-color:lightblue;
-        }
-
-        .banner {
-            font-size:30px;
-            font-weight:bolder;
-            vertical-align: text-top;
-        }
-
-        .toolbar-item{
-            font-size:20px;
-        }
-
-        h1{
-            color:darkblue;
-        }
-
-        h2{
-            color:yellow;
-        }
-
-        a{
-            color:black;
-            text-decoration:underline;
-        }
-        #sidebar-nav{
-            padding-top: 95px;
-            width:260px;
-            background-color:lightgrey;
-        }
-
-        .toolbars {
-            background-color: lightgrey;
-        }
-
-        .icon-60 { font-size: 60px; }
-        .icon-100 { font-size: 100px; }
-        .icon-200 { font-size: 200px; }
-        .icon-300 { font-size: 300px; }
-    </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/bootstrap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/popper.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/cdb.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
-            crossorigin="anonymous"></script>
-    <!--script src = "https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
-    <script>
-        // Initialize a global variable to store the customerID
-        var customerID = null;
-        // Initialize a default account until another is selected
-        var accountRefIndex = 0;
-        //global holding accounts
-        var customerAccounts = [];
-
-        // Function to make a fetch request with included credentials (cookies)
-        // https://javascript.info/fetch-crossorigin#credentials
-        // https://developer.mozilla.org/en-US/docs/Web/API/fetch#credentials
-        // if we don't have this we get 403 sometimes
-        async function fetchWithToken(url, options = {}) {
-            const response = await fetch(url, {
-                ...options,
-                credentials: 'include' // Ensure cookies are included in the request
-            });
-
-            // This is done this way, because we either return json as a response or a string literal.
-            // You can only read the response body once, so we need to check the content type first and read the
-            // correct body type. If we try to parse json first and then if it fails read the string, its already empty
-            // and will fail.
-            // https://stackoverflow.com/questions/37121301/how-to-check-if-the-response-of-a-fetch-is-a-json-object-in-javascript
-            let responseBody;
-            const contentType = response.headers.get("content-type");
-            if (contentType && contentType.indexOf("application/json") !== -1) {
-                responseBody = await response.json(); // Attempt to parse the response as JSON
-            } else {
-                responseBody = await response.text(); // Fallback to text if JSON parsing fails
-            }
-
-            if (!response.ok) {
-                showErrorModal('Network response was not ok: ' + response.statusText + ' - ' + responseBody);
-                throw new Error('Network response was not ok: ' + response.statusText + ' - ' + responseBody);
-            }
-            return responseBody;
-        }
-
-        async function loadDashboard() {
-            try {
-                const data = await fetchWithToken('/dashboard/');
-                console.log('Fetched data:', data); // Log the fetched data for debugging
-                populateDashboard(data);
-                // Set the global customerID variable
-                customerID = data.customer.customerId;
-                // set the global variable for accounts
-                customerAccounts = data.customer.accounts;
-            } catch (error) {
-                console.error('Error loading dashboard:', error);
-                alert('Failed to load dashboard!');
-            }
-        }
-
-        function populateDashboard(data) {
-            // Populate customer details
-            if (data.customer && data.customer.firstName && data.customer.lastName && data.customer.accounts) {
-                document.getElementById('welcomeHeader').innerHTML = `<i style = "font-size:25px">Welcome back ${data.customer.firstName} ${data.customer.lastName}!</i>`;
-
-                var accountsHtml = data.customer.accounts.map(account => `
-                      <tr><td>${account.accountId}</td>
-                        <td>${account.accountType}</td>
-                        <td>${account.balance}</td>
-                     </tr>
-                 `).join('');
-                var fromAccountHtml = `<tr><td>${data.customer.accounts.at(accountRefIndex).accountId}</td>`;
-                var toAccountHtml = `<tr style="background-color:whitesmoke">
-                        <td>${data.customer.accounts.at(accountRefIndex).accountId}</td>`;
-                accountsHtml = accountsHtml.replace(fromAccountHtml, toAccountHtml);
-                document.getElementById('account-details').innerHTML = accountsHtml;
-
-            } else {
-                console.error('Customer data is missing or malformed', data);
-            }
-
-            // Populate transactions
-            if (data.customer.accounts) {
-                const outTransactionsHtml = data.customer.accounts.at(accountRefIndex).transactions.filter(t => t.recipientIBAN != null).map(transaction => `
-                        <tr>
-                            <td>${transaction.recipientName}</td>
-                            <td>${transaction.amount}</td>
-                            <td>${transaction.category}</td>
-                            <td>${transaction.timestamp}</td>
-                        </tr>
-                    `).join('');
-
-                const inTransactionsHtml = data.customer.accounts.at(accountRefIndex).transactions.filter(t => t.senderIBAN != null).map(transaction => `
-
-                    <tr>
-                        <td>${transaction.senderName}</td>
-                        <td>${transaction.amount}</td>
-                        <td>${transaction.category}</td>
-                        <td>${transaction.timestamp}</td>
-                    </tr>
-                `).join('');
-
-                document.getElementById('transactionsOut').innerHTML = outTransactionsHtml;
-                document.getElementById('transactionsIn').innerHTML = inTransactionsHtml;
-            } else {
-                console.error('Transaction data is missing or malformed', data);
-            }
-
-            createTransactionGraph(data);
-            createTransactionsByMonthGraph(data);
-        }
-        /* pop an error modal if something goes wrong, probably will need better error handling (more user friendly */
-        function showErrorModal(message) {
-            const errorModal = new bootstrap.Modal(document.getElementById('errorModal'), {});
-            document.getElementById('errorModalBody').innerText = message;
-            errorModal.show();
-        }
-
-        async function addFavouritePayee(event) {
-            event.preventDefault();
-            const name = document.getElementById('payeeName').value;
-            const iban = document.getElementById('payeeIban').value;
-
-            try {
-                const response = await fetchWithToken(`/api/favourite-payees/add?customerId=${customerID}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name: name, iban: iban })
-                });
-
-                await loadFavouritePayees(); // Refresh the list of favourite payees
-            } catch (error) {
-                console.error('Error adding payee:', error);
-                alert('add payee failed: ' + error.message);
-            }
-        }
-
-        async function removeFavouritePayee(payeeId) {
-            try {
-                const response = await fetchWithToken(`/api/favourite-payees/remove?payeeId=${payeeId}`, {
-                    method: 'DELETE',
-                });
-                await loadFavouritePayees(); // Refresh the list of favourite payees
-            } catch (error) {
-                console.error('Error removing payee:', error);
-                showErrorModal('Failed to remove favourite payee. Please try again later.')
-            }
-        }
-
-        async function loadFavouritePayees() {
-            try {
-                const data = await fetchWithToken('/api/favourite-payees');
-                populateFavouritePayees(data);
-            } catch (error) {
-                console.error('Error loading favourite payees:', error);
-                showErrorModal('Failed to remove favourite payee. Please try again later.')
-            }
-        }
-        function populateFavouritePayees(data) {
-            const payeesHtml = data.map(payee => `
-                <tr>
-                    <td>${payee.name}</td>
-                    <td>${payee.iban}</td>
-                    <td><button onclick="removeFavouritePayee(${payee.id})" class="btn btn-danger">Remove</button></td>
-                </tr>
-            `).join('');
-            document.getElementById('favoritePayeesList').innerHTML = payeesHtml;
-        }
-
-        async function loadCards() {
-            try {
-                const cards = await fetchWithToken('/api/cards', {
-                    method: 'GET'
-                });
-                const cardList = document.getElementById('cardList');
-                cardList.innerHTML = '';
-                cards.forEach(card => {
-                    let buttonsHtml;
-                    if (card.status === 'Stolen') {
-                        buttonsHtml = `
-                            <button class="btn btn-secondary" disabled>Freeze card</button>
-                            <button class="btn btn-secondary" disabled>Stolen</button>`;
-                    } else {
-                        const freezeButton = card.status === 'Frozen' ?
-                            `<button class="btn btn-success" onclick="unfreezeCard(${card.cardId})">Unfreeze Card</button>` :
-                            `<button class="btn btn-warning" onclick="freezeCard(${card.cardId})">Freeze Card</button>`;
-                        buttonsHtml = `
-                            ${freezeButton}
-                            <button class="btn btn-danger" onclick="reportStolen(${card.cardId})">Report Stolen</button>`;
-                    }
-                    cardList.innerHTML += `
-                        <div class="card mb-2">
-                            <div class="card-body">
-                                <p class="card-text"><strong>Card Number:</strong> ${card.cardNumber}</p>
-                                <p class="card-text"><strong>Expiry Date:</strong> ${card.expiryDate}</p>
-                                <p class="card-text"><strong>Status:</strong> ${card.status}</p>
-                                ${buttonsHtml}
-                            </div>
-                        </div>
-                        `;
-                });
-            } catch (error) {
-                console.error('Error loading cards:', error);
-                showErrorModal('Failed to load cards {}', error);
-            }
-        }
-
-        async function orderNewCard() {
-            try {
-                const response = await fetchWithToken('/api/cards/order', {
-                    method: 'POST'
-                });
-                loadCards();
-            } catch (error) {
-                console.error('Error ordering new card:', error);
-                showErrorModal('Order new card failed: ' + error.message);
-            }
-        }
-
-        function showOrderCardConfirmation() {
-            const orderCardModal = new bootstrap.Modal(document.getElementById('orderCardModal'), {});
-            orderCardModal.show();
-        }
-
-        async function freezeCard(cardId) {
-            try {
-                await fetchWithToken(`/api/cards/freeze?id=${cardId}`, {
-                    method: 'PUT'
-                });
-                loadCards();
-            } catch (error) {
-                console.error('Error freezing card:', error);
-                showErrorModal('Failed to freeze card {}', error);
-            }
-        }
-
-        async function unfreezeCard(cardId) {
-            try {
-                await fetchWithToken(`/api/cards/unfreeze?id=${cardId}`, {
-                    method: 'PUT'
-                });
-                loadCards();
-            } catch (error) {
-                console.error('Error unfreezing card:', error);
-                showErrorModal('Failed to unfreeze card {}', error);
-            }
-        }
-
-        async function reportStolen(cardId) {
-            try {
-                await fetchWithToken(`/api/cards/report-stolen?id=${cardId}`, {
-                    method: 'PUT'
-                });
-                alert('Card reported stolen successfully');
-                loadCards();
-            } catch (error) {
-                console.error('Error reporting card stolen:', error);
-                showErrorModal('Failed to report stolen card {}', error);
-            }
-        }
-
-        // Plot all the transactions against the date
-        function createTransactionGraph(data) {
-            console.log('Inside create TransactionGraph');
-
-            var amountData = data.customer.accounts.at(accountRefIndex).transactions.map(transaction => transaction.amount);
-            console.log('Amount Data', amountData);
-
-            var timestampData = data.customer.accounts.at(accountRefIndex).transactions.map(transaction => transaction.timestamp);
-            console.log('Timestamp Data', timestampData);
-
-            var plotData = [];
-
-            for(var i=0;i<timestampData.length;i++)
-            {
-                //xPoints[i] = Math.random()*20;
-                //yPoints[i] = Math.random()*10 + randomNumber;
-
-                //var momentDate = moment(timestampData[i]);
-                //momentDate ().toDate();
-
-                x = new Date(timestampData[i].slice(0,10));
-                y = amountData[i];
-                var json = {x: x, y: y};
-                plotData.push(json);
-            }
-            console.log('Data for plotting', plotData);
-
-            let canvas = document.getElementById("transactionsChart")
-
-            let options = {
-                legend: {display: false},
-                scales: {
-                    x: {
-                        type: 'time',
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Date'
-                        },
-                        time: {
-                            unit: 'day',
-                            displayFormats: {
-                                'day': 'MMM dd'
-                            }
-                        }
-                    }  // end scales
-                }
-            };
-
-            new Chart(canvas, {
-                    type: "scatter",
-                    data: {
-                        datasets: [{
-                            pointRadius: 4,
-                            pointBackgroundColor: "rgba(0,0,255,1)",
-                            data: plotData,
-                            label: 'Transactions'
-                        }]
-                    },
-                    options: options
-                }
-            );
-        }
-        //Create a graph grouping the transactions by month
-        function createTransactionsByMonthGraph(data) {
-            console.log('Inside create TransactionsByMonthGraph');
-
-            var amountData = data.customer.accounts.at(accountRefIndex).transactions.map(transaction => transaction.amount);
-            console.log('Amount Data', amountData);
-
-            var timestampData = data.customer.accounts.at(accountRefIndex).transactions.map(transaction => transaction.timestamp);
-            console.log('Timestamp Data', timestampData);
-
-            var plotData = [];
-            var runningMonthTotal = 0;
-            var prevMonth = 0;
-            var currMonth = 0;
-
-            for(var i=0;i<timestampData.length;i++)
-            {
-                m = new Date(timestampData[i].slice(0,10));
-                currMonth = m.getMonth();
-
-                if ((currMonth === prevMonth) || (prevMonth === 0))
-                {
-                    runningMonthTotal = runningMonthTotal + amountData[i];
-                }
-                //Populate the array for the previous month
-                if (((currMonth !== prevMonth) && (prevMonth !== 0)))
-                {
-                    var monthNum = prevMonth+1;
-                    var month = monthNum.toString();
-                    month = month.padStart(2,"0");
-                    var maindate = m.getFullYear() + '-' + month + '-' + '01' + 'T' + '00' + ':' + '00' + ':' + '00' + '.' + '000Z';
-                    mo = Date.parse(maindate);
-                    x = mo;
-                    y = runningMonthTotal;
-                    var json = {x: x, y: y};
-                    plotData.push(json);
-                    //Start a new month
-                    runningMonthTotal = amountData[i];
-                }
-                //Populate the array for the current
-                if (i===(timestampData.length-1))
-                {
-                    var monthNum = currMonth+1;
-                    var month = monthNum.toString();
-                    month = month.padStart(2,"0");
-                    var maindate = m.getFullYear() + '-' + month + '-' + '01' + 'T' + '00' + ':' + '00' + ':' + '00' + '.' + '000Z';
-                    mo = Date.parse(maindate);
-                    x = mo;
-                    y = runningMonthTotal;
-                    var json = {x: x, y: y};
-                    plotData.push(json);
-                    runningMonthTotal = amountData[i];
-                }
-                prevMonth = currMonth;
-            }
-            console.log('Data for plotting', plotData);
-
-            let canvas = document.getElementById("transactionsByMonthChart")
-
-            let options = {
-                legend: {display: false},
-                scales: {
-                    x: {
-                        type: 'time',
-                        display: true,
-                        title: {
-                            display: true,
-                            text: 'Month'
-                        } ,
-                        time: {
-                            minUnit: 'month',
-                            displayFormats: {
-                                month: 'MMM-yyyy'
-                            }
-                        }
-
-                    }  // end scales
-                }
-            };
-
-            new Chart(canvas, {
-                    type: "scatter",
-                    data: {
-                        datasets: [{
-                            pointRadius: 4,
-                            pointBackgroundColor: "rgba(0,0,255,1)",
-                            data: plotData,
-                            label: 'Transactions Total'
-                        }]
-                    },
-                    options: options
-                }
-            );
-
-        }
-
-
-        function showBillPaymentModal(provider) {
-            const billPaymentModal = new bootstrap.Modal(document.getElementById('billPaymentModal'));
-            document.getElementById('billProvider').innerText = provider;
-            populateAccountSelect();
-            billPaymentModal.show();
-        }
-
-        function populateAccountSelect() {
-            const accountSelect = document.getElementById('accountSelect');
-            accountSelect.innerHTML = '';
-            customerAccounts.forEach((account, index) => {
-                const option = document.createElement('option');
-                option.value = account.accountId;
-                option.text = `Account ${index + 1} - ${account.iban}`;
-                accountSelect.appendChild(option);
-            });
-        }
-
-        async function payBill() {
-            const provider = document.getElementById('billProvider').innerText;
-            const amount = document.getElementById('billAmount').value;
-            const senderAccountId = document.getElementById('accountSelect').value;
-            const selectedAccount = customerAccounts.find(account => account.accountId == senderAccountId);
-
-            if (!selectedAccount) {
-                showErrorModal('Selected account not found.');
-                return;
-            }
-
-            const senderIBAN = selectedAccount.iban;
-
-            const recipientIBAN = {
-                'Eir': 'IE29AIBK93115212345678',
-                'Vodafone': 'IE29BOFI90135312345678',
-                'ElectricIreland': 'IE29BOFI90001712345678'
-            };
-
-            const transaction = {
-                senderIBAN: senderIBAN,
-                recipientName: provider,
-                recipientIBAN: recipientIBAN[provider],
-                amount: parseFloat(amount),
-                category: 'bills',
-                timestamp: new Date().toISOString(),
-                senderAccountId: senderAccountId
-            };
-
-            try {
-                await fetchWithToken('/transaction/makeTransaction/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(transaction)
-                });
-                const billPaymentModal = bootstrap.Modal.getInstance(document.getElementById('billPaymentModal'));
-                billPaymentModal.hide();
-            } catch (error) {
-                console.error('Error paying bill:', error);
-                showErrorModal('Bill Payment failed');
-            }
-        }
-
-        async function makeTransaction(event){
-            // prevent default submission behaviour
-            event.preventDefault();
-            // Get the customer ID and password from the form fields
-            const amount = document.getElementById('amount').value;
-            const category = document.getElementById('category').value;
-            const recipientName = document.getElementById('recipientName').value;
-            const recipientIBAN = document.getElementById('recipientIBAN').value;
-
-            // Make a POST request to the /api/authenticate endpoint
-            const response = await fetch('/transaction/makeTransaction/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                // Convert the username and password to a JSON string and include it in the request body
-                body: JSON.stringify({ amount: amount, recipientName: recipientName, recipientIBAN: recipientIBAN, category: category })
-            });
-            // If the response is OK, redirect to the dashboard page
-            if (response.ok) {
-                window.location.href = '/dashboard';
-            } else {
-                alert('transfer failed');
-            }
-        }
-
-        async function makeAccount(event){
-            // prevent default submission behaviour
-            event.preventDefault();
-            // Get the customer ID and password from the form fields
-            const accountType = document.getElementById('accountType').value;
-
-            // Make a POST request to the /api/authenticate endpoint
-            const response = await fetch('/dashboard/makeAccount/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                // Convert the username and password to a JSON string and include it in the request body
-                body: JSON.stringify({ accountType: accountType })
-            });
-            // If the response is OK, redirect to the dashboard page
-            if (response.ok) {
-                window.location.href = '/dashboard';
-            } else {
-                alert('creation failed');
-            }
-        }
-
-        window.onload = function() {
-            loadDashboard();
-            loadFavouritePayees();
-            loadCards();
-        };
-    </script>
 </head>
 
-<body>
-<script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/bootstrap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/cdbootstrap/js/cdb.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
-
-<nav class="navbar navbar-expand-lg navbar-light fixed-top flex-md-nowrap p-0 shadow">
-    <div class="container-fluid toolbars">
-        <a class="navbar-brand banner align-middle" href="/"><i class="bi bi-bank icon-60"></i>   Bank of Galway</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<nav class="navbar navbar-expand-lg banner fixed-top flex-md-nowrap p-0">
+    <div class="container-fluid banner">
+        <a class="navbar-brand banner align-middle" href="/dashboard"><i class="bi bi-bank icon-45"></i> Bank of Galway</a>
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                </li>
-                <li class="nav-item">
-                </li>
-                <li class="nav-item">
-                </li>
-                <li>
-                </li>
-            </ul>
-            <a class="navbar-brand banner align-bottom" id="welcomeHeader">welcomeHeader</a>
-            <form class="d-flex">
-                <input class="form-control me-2 toolbar-item" type="search" placeholder="Search" aria-label="Search">
-                <button class="btn btn-outline-success" type="submit">Search</button>
-            </form>
-        </div>
-
-    </div>
-</nav>
-<div class="container-fluid">
-    <div class="row flex-nowrap">
-        <div class="col-auto px-0"  style="height: 100%">
-            <div id="sidebar" class="collapse collapse-horizontal show border-end">
-                <div id="sidebar-nav" class="list-group border-0 rounded-0 text-sm-start min-vh-100" style="background-color: lightgrey">
-                    <a style="background-color:lightgrey" href="#home" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-house"></i> <span>Home</span></a>
-                    <a style="background-color:lightgrey" href="#transaction-enquiry" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-question-diamond"></i> <span>Transaction Enquiry</span></a>
-                    <a style="background-color:lightgrey" href="#transfer-funds" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span></a>
-                    <a style="background-color:lightgrey" href="#pay-bill" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-ruled"></i> <span>Pay a Bill</span></a>
-                    <a style="background-color:lightgrey" href="#create-account" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-plus"></i> <span>Create a New Account</span></a>
-                    <a style="background-color:lightgrey" href="#request-statements" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-file-text"></i> <span>Request Statements</span></a>
-                    <a style="background-color:lightgrey" href="#order-card" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-credit-card"></i> <span>Card Management</span></a>
-                    <a style="background-color:lightgrey" href="#manage-payees" class="list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab"><i class="bi bi-people"></i> <span>Manage Payees</span></a>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="navbar-text me-3" id="welcomeHeader">Welcome, User</span>
+                <div class="dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="blank-profile-pic.png" alt="User Profile" class="rounded-circle profile-picture" width="30" height="30">
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#" onclick="showUserProfile()">User Profile</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
-        <main class="col ps-md-2 pt-2">
-            <br/>
-            <br/>
-            <br/>
-            <br/>
-            <div class="tab-content">
-                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab">
-                    <div class="row">
-                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row flex-nowrap">
+        <div class="col-auto px-0" style="height: 100%">
+            <div id="sidebar" class="collapse collapse-horizontal show border-end">
+                <div id="sidebar-nav" class="layout-menu list-group border-0 rounded-0 text-sm-start min-vh-100">
+                    <a href="#home" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab" id="home-link" onclick="loadDashboard()">
+                        <i class="bi bi-house"></i> <span>Home</span>
+                    </a>
+                    <a href="#transaction-enquiry" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-question-diamond"></i> <span>Transaction Enquiry</span>
+                    </a>
+                    <a href="#deposit-withdraw" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-cash"></i> <span>Deposit/Withdrawal</span>
+                    </a>
+                    <a href="#transfer-funds" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span>
+                    </a>
+                    <a href="#pay-bill" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-file-ruled"></i> <span>Pay a Bill</span>
+                    </a>
+                    <a href="#create-account" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-file-plus"></i> <span>Create a New Account</span>
+                    </a>
+                    <a href="#savings-accounts" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-piggy-bank"></i> <span>Savings Accounts</span>
+                    </a>
+                    <a href="#order-card" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-credit-card"></i> <span>Card Management</span>
+                    </a>
+                    <a href="#manage-payees" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-people"></i> <span>Manage Payees</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <main class="col main-content ps-md-2 pt-2 mt-5">
+            <div class="tab-content mt-4">
+                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab" >
+                    <h3>Home</h3>
+                    <div class="row mb-4">
+                        <!-- Customer Accounts and Recent Transactions -->
+                        <div class="col-12 col-md-6 mb-4 mb-lg-0">
                             <div class="card">
                                 <h5 class="card-header">Customer Accounts</h5>
                                 <div class="card-body">
@@ -673,102 +96,154 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <button class="btn btn-primary" onclick="openTransferModal()">Transfer Balance</button>
+                                </div>
+                            </div>
+                            <div class="card mt-4">
+                                <h5 class="card-header">Recent Transactions</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>Recipient</th>
+                                                <th>Amount</th>
+                                                <th>Date</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="recent-transactions">
+                                            <!-- Transactions will be populated here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Recent Expenditure and Monthly Expenditure -->
+                        <div class="col-12 col-md-6 mb-4 mb-lg-0">
+                            <div class="card">
+                                <h5 class="card-header">Recent Expenditure</h5>
+                                <div class="card-body">
+                                    <canvas id="recentExpenditureChart" class="small-chart"></canvas>
+                                </div>
+                            </div>
+                            <div class="card mt-4">
+                                <h5 class="card-header">Monthly Expenditure</h5>
+                                <div class="card-body">
+                                    <canvas id="monthlyExpenditureChart" class="small-chart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="tab-pane fade" id="transaction-enquiry" role="tabpanel">
-                    <h2>Transaction Enquiry</h2><div class="row">
-                    <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                        <div class="card">
-                            <h5 class="card-header">Latest Outgoing Transactions</h5>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                        <tr>
-                                            <th>Recipient</th>
-                                            <th>Amount Sent</th>
-                                            <th>Category</th>
-                                            <th>Date & Time of Transaction</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="transactionsOut">
-                                        <!-- Transactions will be populated here -->
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
+                    <h3>Transaction Enquiry</h3>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <label for="accountSelect" class="form-label">Select Account</label>
+                            <select class="form-select" id="accountSelect"></select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-3 align-self-end">
+                            <button class="btn btn-primary" onclick="filterTransactions()">Filter</button>
                         </div>
                     </div>
-                    <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                        <div class="card">
-                            <h5 class="card-header">Latest Incoming Transactions</h5>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                        <tr>
-                                            <th>Sent From</th>
-                                            <th>Amount Received</th>
-                                            <th>Category</th>
-                                            <th>Date & Time of Transaction</th>
-                                        </tr>
-                                        </thead>
-                                        <tbody id="transactionsIn">
-                                        <!-- Transactions will be populated here -->
-                                        </tbody>
-                                    </table>
-                                </div>
+                    <div class="card">
+                        <h5 class="card-header">Transactions</h5>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Amount</th>
+                                        <th>Category</th>
+                                        <th>Date</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="transactionsTable">
+                                    </tbody>
+                                </table>
                             </div>
-                        </div>
-                    </div>
-                    <br>
-                    <div class="row">
-                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                            <div class="card">
-                                <h5 class="card-header">Transactions by Day</h5>
-                                <div class="card-body" style="max-height: 380px">
-                                    <canvas id = "transactionsChart"> </canvas>
-                                    <div id = "output"> </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-12 col-xl-6 mb-4 mb-lg-0">
-                            <div class="card">
-                                <h5 class="card-header">Transactions by Month</h5>
-                                <div class="card-body" style="max-height: 380px">
-                                    <canvas id = "transactionsByMonthChart"> </canvas>
-                                    <div id = "output1"> </div>
-                                </div>
+                            <div class="card-footer">
+                                <nav>
+                                    <ul class="pagination justify-content-center" id="transactionPagination">
+                                    </ul>
+                                </nav>
                             </div>
                         </div>
                     </div>
                 </div>
+                <!-- Deposit/Withdrawal Tab -->
+                <div class="tab-pane fade" id="deposit-withdraw" role="tabpanel">
+                    <form id="depositWithdrawForm" onsubmit="handleDepositWithdraw(event)">
+                        <div class="form-group mb-3 col-md-4">
+                            <label for="transactionType">Select Transaction Type:</label>
+                            <select class="form-select" id="transactionType" onchange="toggleDepositWithdrawFields()" required>
+                                <option value="deposit">Deposit</option>
+                                <option value="withdraw">Withdraw</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3 col-md-4">
+                            <label for="transactionAccount">Select Account:</label>
+                            <select class="form-select" id="transactionAccount" required></select>
+                        </div>
+                        <div class="form-group mb-3 col-md-4">
+                            <label for="transactionAmount">Amount:</label>
+                            <input type="number" class="form-control" id="transactionAmount" placeholder="Enter amount" step="0.01" min="0" max="999999" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
                 </div>
+                <!-- transfer funds tab -->
                 <div class="tab-pane fade" id="transfer-funds" role="tabpanel">
-                    <h2>Transfer Funds</h2>
+                    <h3>Transfer Funds</h3>
                     <form id="makeTransactionForm" onsubmit="makeTransaction(event)">
-                        <div class="mb-3">
+                        <div class="mb-3 col-md-4">
+                            <label for="transferAccountSelect" class="form-label">Select Account</label>
+                            <select class="form-select" id="transferAccountSelect"></select>
+                        </div>
+                        <div class="mb-3 col-md-4">
                             <label for="amount" class="form-label">Amount To Send</label>
-                            <input type="number" class="form-control" id="amount" required>
+                            <input type="number" class="form-control no-spinner" id="amount" placeholder="Enter amount" step="0.01" min="1" max="999999" required>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 col-md-4">
                             <label for="category" class="form-label">Transaction Category</label>
-                            <input type="text" class="form-control" id="category" required>
+                            <select class="form-select" id="category" required>
+                                <option value="Dining">Dining</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Groceries">Groceries</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Other">Other</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Transport">Transport</option>
+                                <option value="Utilities">Utilities</option>
+                            </select>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 col-md-4">
                             <label for="recipientName" class="form-label">Recipient Name</label>
                             <input type="text" class="form-control" id="recipientName" required>
                         </div>
-                        <div class="mb-3">
+                        <div class="mb-3 col-md-4">
                             <label for="recipientIBAN" class="form-label">Recipient IBAN</label>
                             <input type="text" class="form-control" id="recipientIBAN" required>
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </form>
-                </div>
+                    </div>
                 <div class="tab-pane fade" id="pay-bill" role="tabpanel">
+                    <h3>Pay a Bill</h3>
                     <p>Select a provider below to pay your bill:</p>
                     <!-- Cards for bill providers -->
                     <div class="row">
@@ -799,22 +274,59 @@
                     </div>
                 </div>
                 <div class="tab-pane fade" id="create-account" role="tabpanel">
-                    <h2>Create a New Account</h2>
+                    <h3>Create your new account.</h3>
                     <form id="makeAccountForm" onsubmit="makeAccount(event)">
-                        <div class="mb-3">
-                            <label for="accountType" class="form-label">Enter Account Type To Make</label>
-                            <input type="text" class="form-control" id="accountType" required>
+                        <div class="mb-3 col-md-3">
+                            <label for="accountType" class="form-label">Select Account Type</label>
+                            <select class="form-select" id="accountType" required>
+                                <option value="Current">Current</option>
+                                <option value="Savings">Savings</option>
+                                <option value="Currency">Currency</option>
+                            </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </form>
                 </div>
-                <div class="tab-pane fade" id="request-statements" role="tabpanel">
-                    <h2>Request Statements</h2>
-                    <p>Content for Request Statements</p>
+                <!-- savings -->
+                <div class="tab-pane fade" id="savings-accounts" role="tabpanel">
+                    <h3>Savings Accounts</h3>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="savingsAccountSelect" class="form-label">Select Savings Account:</label>
+                            <select class="form-select" id="savingsAccountSelect" onchange="updateSavingsAccountInfo()"></select>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="savingsAccountBalance" class="form-label">Account Balance:</label>
+                            <input type="text" class="form-control" id="savingsAccountBalance" readonly>
+                        </div>
+                    </div>
+                    <form id="startSavingsForm" onsubmit="startSavings(event)">
+                        <div class="form-group mb-3 col-md-4">
+                            <label for="savingsAmount">Amount:</label>
+                            <input type="number" class="form-control" id="savingsAmount" placeholder="Enter amount" step="0.01" min="0" max="999999" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Start Savings</button>
+                    </form>
+                    <div id="activeSavings" style="display: none;">
+                        <h4>Active Savings</h4>
+                        <table class="table table-striped favorite-payees-background">
+                            <thead>
+                            <tr>
+                                <th>Amount</th>
+                                <th>Interest Rate</th>
+                                <th>Start Time</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+                            <tbody id="activeSavingsTable">
+                            <!-- Active savings will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <!-- adding card management Order/Freeze/Report Stolen -->
                 <div class="tab-pane fade" id="order-card" role="tabpanel">
-                    <p>Manage your payment cards below.</p>
+                    <h3>Manage your payment cards below.</h3>
                     <!-- Section to display cards -->
                     <div class="card mt-4">
                         <div class="card-header">
@@ -836,21 +348,26 @@
                 </div>
 
                 <div class="tab-pane fade" id="manage-payees" role="tabpanel">
-                    <h2>Add Favourite Payee</h2>
+                    <h3>Manage Payees</h3>
                     <form id="addFavouritePayeeForm" onsubmit="addFavouritePayee(event)">
-                        <label for="payeeName">Name:</label>
-                        <input type="text" id="payeeName" name="payeeName" required>
-                        <label for="payeeIban">IBAN:</label>
-                        <input type="text" id="payeeIban" name="payeeIban" required>
-                        <button type="submit">Add Payee</button>
+                        <div class="col-md-3">
+                            <label for="payeeName" class="form-label">Name:</label>
+                            <input type="text" id="payeeName" name="payeeName" class="form-control" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="payeeIban" class="form-label">IBAN:</label>
+                            <input type="text" id="payeeIban" name="payeeIban" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 20px;">Add Payee</button>
                     </form>
-                    <h2>Favourite Payees</h2>
+                    <h3 class="mt-4">Favourite Payees</h3>
                     <div class="table-responsive">
-                        <table class="table">
-                            <thead>
+                        <table class="table table-striped favorite-payees-background">
+                            <thead class="table-dark">
                             <tr>
                                 <th>Name</th>
                                 <th>IBAN</th>
+                                <th class="text-end text-center text-decoration-underline">Actions</th> <!-- move text to the end of table -->
                             </tr>
                             </thead>
                             <tbody id="favoritePayeesList">
@@ -863,7 +380,6 @@
         </main>
     </div>
 </div>
-
 
 <!-- Order Card Confirmation Modal -->
 <div class="modal fade" id="orderCardModal" tabindex="-1" aria-labelledby="orderCardModalLabel" aria-hidden="true">
@@ -879,7 +395,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Cancel</button>
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="orderNewCard()" >Confirm</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="orderNewCard()">Confirm</button>
             </div>
         </div>
     </div>
@@ -896,8 +412,8 @@
             <div class="modal-body">
                 <p>Paying bill for: <span id="billProvider"></span></p>
                 <div class="form-group">
-                    <label for="accountSelect">Select Account:</label>
-                    <select class="form-select" id="accountSelect"></select>
+                    <label for="billAccountSelect">Select Account:</label>
+                    <select class="form-select" id="billAccountSelect"></select>
                 </div>
                 <div class="form-group">
                     <label for="billAmount">Amount:</label>
@@ -907,6 +423,51 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-primary" onclick="payBill()">Confirm Payment</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- User Profile Modal -->
+<div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="profile-header">
+                    <img src="blank-profile-pic.png" alt="User Profile" class="rounded-circle profile-avatar" width="80" height="80">
+                    <h3 id="profileName"></h3>
+                    <p id="profileEmail" class="text-muted"></p>
+                </div>
+                <div class="profile-details">
+                    <p><strong>Phone:</strong> <span id="profilePhone"></span></p>
+                    <p><strong>Address:</strong> <span id="profileAddress"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="successModalBody">
+                <!-- Success message will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -924,21 +485,54 @@
                 <!-- Error message will be populated here -->
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Close</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
+
+<!-- transfer balance modal -->
+<div class="modal fade" id="transferBalanceModal" tabindex="-1" aria-labelledby="transferBalanceModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferBalanceModalLabel">Transfer Balance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="transferBalanceForm" onsubmit="handleTransferBalance(event)">
+                    <div class="form-group mb-3">
+                        <label for="transferFromAccount">From Account:</label>
+                        <select class="form-select" id="transferFromAccount" onchange="updateTargetAccounts()"></select>
+                    </div>
+                    <div class="text-center mb-3">
+                        <button type="button" class="btn btn-secondary" onclick="reverseAccounts()">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </button>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="transferToAccount">To Account:</label>
+                        <select class="form-select" id="transferToAccount"></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="transferAmount">Amount:</label>
+                        <input type="number" class="form-control" id="transferAmount" placeholder="Enter amount" step="0.01" min="0" max="999999">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
 <script>
-    //Script to respond to clicking on Account chosen and refresh the dashboard
-    $('#account-details').on('click', 'tr' , function (event) {
+    /* script to respond to clicking on Account chosen and refresh the dashboard */
+    $('#account-details').on('click', 'tr', function (event) {
         var col = ($(this).index());
         console.log(col);
         var fullRow = $(this).html();
-        //alert(fullRow);
-        const accountIdArray = fullRow.split("<td>",2);
-        const accountId = accountIdArray[1].split("</td>",1)
-        //alert('The clicked accountId is: ' + accountId + ' col index ' + col);
+        const accountIdArray = fullRow.split("<td>", 2);
+        const accountId = accountIdArray[1].split("</td>", 1)
         accountRefIndex = col;
         let chartStatus = Chart.getChart("transactionsChart"); // <canvas> id
         if (chartStatus != undefined) {
@@ -951,8 +545,5 @@
         loadDashboard();
     });
 </script>
-<!-- Load jQuery first -->
-<script src="/webjars/jquery/3.3.1/jquery.min.js"></script>
-<script type="text/javascript" th:src="@{webjars/bootstrap/5.2.3/js/bootstrap.min.js}"></script>
-</body>
+<script src="/js/dashboard.js"></script>
 </html>

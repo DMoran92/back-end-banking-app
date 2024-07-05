@@ -2,6 +2,7 @@ package com.bankingapp.backend.controller;
 
 import com.bankingapp.backend.security.JwtUtil;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -59,6 +61,24 @@ public class AuthController {
         logger.info("Set JWT token in HttpOnly cookie");
 
         return ResponseEntity.ok("Authenticated");
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        logger.info("Removing user auth from security context");
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            new SecurityContextLogoutHandler().logout(request, response, auth);
+
+            // Clear the JWT cookie
+            Cookie cookie = new Cookie("jwt", null);
+            cookie.setPath("/");
+            cookie.setHttpOnly(true);
+            cookie.setMaxAge(0); // Expire the cookie immediately
+            response.addCookie(cookie);
+        }
+        logger.info("User logged out");
+        return ResponseEntity.ok("successful logout");
     }
 }
 /* DTO for authentication request containing username and password  */
