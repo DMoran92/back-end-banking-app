@@ -44,6 +44,33 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
+    @Transactional
+    public Optional<Account> deposit(Account account, double amount) {
+        /* find the account by using accountId*/
+        return accountRepository.findById(account.getAccountId()).map(target -> {
+            /* update the account balance */
+            target.setBalance(account.getBalance() + amount);
+            return target;
+        });
+    }
+
+    @Override
+    @Transactional
+    public Optional<Account> withdraw(Account account, double amount) {
+        /* ind the account by using accountId */
+        return accountRepository.findById(account.getAccountId()).map(target -> {
+            /* Check if there is sufficient balance before withdrawal */
+            if (target.getBalance() >= amount) {
+                /* update the balance */
+                target.setBalance(account.getBalance() - amount);
+                return target;
+            } else {
+                throw new RuntimeException ("Insufficient funds");
+            }
+        });
+    }
+
+    @Override
     public Transaction makeNewTransaction(Transaction transaction) {
         return transactionRepository.save(transaction);
     }
