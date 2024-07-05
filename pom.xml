@@ -9,8 +9,8 @@
     <artifactId>backend</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>war</packaging>
-    <name>banktest</name>
-    <description>test bank</description>
+    <name>backend</name>
+    <description>banking application</description>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
