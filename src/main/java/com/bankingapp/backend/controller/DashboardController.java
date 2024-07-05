@@ -97,10 +97,7 @@ public class DashboardController {
         return ResponseEntity.status(500).body(errorResponse); // Returning 500 Internal Server Error
 
     }
-    /*
-    NOTE: this prop will need to be reworked when we start working with transactions on the new dashboard */
-
-
+    
     @PostMapping("/makeAccount/")
     public String makeAccount(@RequestBody Map<String, Object> payload){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -109,8 +106,6 @@ public class DashboardController {
 
         Customer customer = customerRepository.findByUsername(username);
         int customerId = customer.getCustomerId();
-
-
 
         logger.info("Your payload: {}", payload.toString());
         String accountType = payload.get("accountType").toString();
