@@ -1,22 +1,129 @@
-#sidebar-nav{
-    width:200px;
+/* Main CSS file: main.css */
+
+body {
+    background-color: lightblue;
 }
 
-body{
-    /*padding-top: 50px;*/
-    background-color:lightblue;
+.banner {
+    background-color: GhostWhite;
+    font-size: 30px;
+    font-weight: bolder;
+    vertical-align: text-top;
 }
 
-h1{
-    color:darkblue;
+.toolbar-item {
+    font-size: 20px;
 }
 
-h2{
-    color:yellow;
+h1 {
+    color: red;
 }
 
-a{
-    color:black;
-    text-decoration:underline;
+h2 {
+    color: yellow;
 }
+
+a {
+    color: black;
+    text-decoration: underline;
+}
+
+.layout-menu {
+    padding-bottom: inherit;
+    width: 260px;
+    background-color: GhostWhite;
+    transition: left 0.3s ease-in-out;
+    position: fixed;
+    top: 70px; /* align with navbar height */
+    bottom: 0;
+    overflow-y: auto;
+}
+
+
+.layout-menu .menu-link {
+    background-color: GhostWhite;
+    display: flex;
+    align-items: center;
+    padding: 10px 10px;
+    color: black;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.3s;
+}
+
+.layout-menu .menu-link.active {
+    background-color: azure;
+}
+
+.layout-menu .menu-link:hover {
+    background-color: azure; /* change hover color */
+}
+
+.profile-picture {
+    border: 2px solid #070707; /* add a border around the profile picture */
+    cursor: pointer; /* change the cursor to a pointer when hovering over the image */
+}
+
+.navbar .navbar-collapse {
+    display: flex;
+    align-items: center;
+}
+
+.navbar .navbar-collapse .ms-auto {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end; /* ensure it aligns to the right */
+    flex-grow: 1;
+}
+
+.navbar-text {
+    color: black; /* force text in the navbar to be black */
+    font-size: 1.25rem; /* increase the font size of the navbar text */
+    display: flex;
+    align-items: center; /* center vertically */
+}
+
+.navbar .nav-link,
+.navbar .navbar-brand {
+    color: black !important; /*e nsure all links and brand text are black */
+    font-size: 1.25rem; /* increase the font size of the links and brand text */
+}
+
+.navbar .nav-link:hover,
+.navbar .navbar-brand:hover {
+    color: black !important; /* ensure hover state remains black */
+}
+
+main .tab-content {
+    margin-top: 50px !important;
+}
+
+.small-chart {
+    width: 100% !important;
+    height: 300px !important;
+}
+
+.icon-45 {
+    font-size: 45px;
+}
+
+.main-content {
+    margin-left: 260px; /* align with sidebar width */
+    padding: 20px; /* add padding for better spacing */
+}
+
+.favorite-payees-background {
+    background-color: GhostWhite;
+}
+/* https://stackoverflow.com/questions/74194120/remove-arrows-in-mui-number-textfield */
+/* hide spinner controls in number input for deposit */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
 
