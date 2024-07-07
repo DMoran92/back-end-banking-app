@@ -303,6 +303,15 @@ function populateRecentTransactions(transactions) {
 function showErrorModal(message) {
     const errorModal = new bootstrap.Modal(document.getElementById('errorModal'), {});
     document.getElementById('errorModalBody').innerText = message;
+
+    /* we currently only have one case of possible 2 modals displaying at the same time.
+       this might need to be changed later.
+     */
+    const transferModal = bootstrap.Modal.getInstance(document.getElementById('transferBalanceModal'));
+    if (transferModal) {
+        transferModal.hide();
+    }
+
     errorModal.show();
 }
 /* pop success modal */
