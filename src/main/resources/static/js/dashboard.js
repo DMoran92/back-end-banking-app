@@ -79,17 +79,18 @@ function populateDashboard(data) {
         document.getElementById('account-details').innerHTML = accountsHtml;
 
         /* populate recent transactions for the selected account */
-        populateRecentTransactions(data.customer.accounts[accountRefIndex].transactions);
+        populateRecentTransactions(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
         /* Process recent and monthly expenditure graphs for selected account */
-        processRecentExpenditure(data.customer.accounts[accountRefIndex].transactions);
-        processMonthlyExpenditure(data.customer.accounts[accountRefIndex].transactions);
+        processRecentExpenditure(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
+        processMonthlyExpenditure(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
     } else {
         console.error('Customer data is missing or malformed', data);
     }
 }
 
 let recentExpenditureChart = null;
-function processRecentExpenditure(transactions) {
+function processRecentExpenditure(iban,transactions) {
+
     /* define the categories for expenditure */
     const categories = ['Dining', 'Entertainment', 'Groceries', 'Healthcare', 'Other', 'Personal', 'Transport', 'Utilities'];
     const categorySums = {};
@@ -111,7 +112,9 @@ function processRecentExpenditure(transactions) {
     /* sum transactions by category */
     last30Days.forEach(transaction => {
         if (categorySums.hasOwnProperty(transaction.category)) {
-            categorySums[transaction.category] += Math.abs(transaction.amount);
+            if (!iban.includes(transaction.recipientIBAN)) { // Only add outgoing transactions
+                categorySums[transaction.category] += Math.abs(transaction.amount);
+            }
         }
     });
 
@@ -153,7 +156,8 @@ function processRecentExpenditure(transactions) {
 }
 
 let monthlyExpenditureChart = null;
-function processMonthlyExpenditure(transactions) {
+function processMonthlyExpenditure(iban,transactions) {
+
     /* initialize an object to store the sums for each month */
     const monthlySums = {};
     /* iterate over each transaction */
@@ -164,8 +168,10 @@ function processMonthlyExpenditure(transactions) {
         if (!monthlySums[yearMonth]) {
             monthlySums[yearMonth] = 0;
         }
-        /* add the transaction amount to the monthly sum */
-        monthlySums[yearMonth] += Math.abs(transaction.amount);
+        if (!iban.includes(transaction.recipientIBAN)) { // Only add outgoing transactions
+            /* add the transaction amount to the monthly sum */
+            monthlySums[yearMonth] += Math.abs(transaction.amount);
+        }
     });
 
     /* prepare data for the chart */
@@ -207,7 +213,8 @@ function processMonthlyExpenditure(transactions) {
 /* used for transactions enquiry pagination for better viewing experience */
 let transactionsPerPage = 10;
 let currentTransactionPage = 1;
-let filteredTransactions = [];
+let filteredTransactions = []
+let selectedIban = "";
 
 function filterTransactions() {
     const selectedAccountId = document.getElementById('accountSelect').value;
@@ -226,6 +233,7 @@ function filterTransactions() {
     endDate.setHours(23, 59, 59, 999);
 
     const selectedAccount = customerAccounts.find(account => account.accountId == selectedAccountId);
+    selectedIban = selectedAccount.iban;
     /* display error if selected account doesnt exists. */
     if (!selectedAccount) {
         showErrorModal('Selected account not found.');
@@ -256,16 +264,31 @@ function populateTransactionsTable(transactions) {
         document.getElementById('transactionsTable').innerHTML = `<tr><td colspan="5" class="text-center">--- NO TRANSACTIONS FOR THIS PERIOD ---</td></tr>`;
         return;
     }
+
     /* generate HTML for each transaction */
-    const transactionsHtml = transactions.map(transaction => `
-        <tr>
-            <td>${transaction.recipientIBAN ? 'Outgoing' : 'Incoming'}</td>
-            <td>${transaction.recipientName || transaction.senderName}</td>
-            <td style="color: ${transaction.recipientIBAN ? 'red' : 'green'};">${transaction.amount}</td>
-            <td>${transaction.category}</td>
-            <td>${transaction.timestamp}</td>
-        </tr>
-    `).join('');
+    const transactionsHtml = transactions.map(transaction => {
+        let isOutgoing = !selectedIban.includes(transaction.recipientIBAN);
+        let transactionName = isOutgoing ? transaction.recipientName : transaction.senderName;
+
+        /* check if the category is "Cash Withdrawal" or "Cash Deposit" */
+        if (transaction.category === "Cash Withdrawal") {
+            transactionName = "Cash Withdrawal";
+            isOutgoing = true;
+        } else if (transaction.category === "Cash Deposit") {
+            transactionName = "Cash Deposit";
+            isOutgoing = false;
+        }
+
+        return `
+            <tr>
+                <td>${transactionName}</td>
+                <td style="color: ${isOutgoing ? 'red' : 'green'};">${transaction.amount}</td>
+                <td>${transaction.category}</td>
+                <td>${transaction.timestamp}</td>
+            </tr>
+        `;
+    }).join('');
+
     document.getElementById('transactionsTable').innerHTML = transactionsHtml;
 }
 /* function to update pagination controls */
@@ -286,16 +309,37 @@ function changeTransactionPage(page) {
     currentTransactionPage = page;
     paginateTransactions();
 }
-/* function to populate the recent transactions table */
-function populateRecentTransactions(transactions) {
-    const recentTransactions = transactions.slice(0, 10); // Get the most recent 10 transactions
-    const recentTransactionsHtml = recentTransactions.map(transaction => `
-        <tr>
-            <td>${transaction.recipientName || transaction.senderName}</td>
-            <td style="color: ${transaction.recipientIBAN ? 'red' : 'green'};">${transaction.amount}</td>
-            <td>${transaction.timestamp}</td>
-        </tr>
-    `).join('');
+/* Function to populate the recent transactions table */
+function populateRecentTransactions(iban,transactions) {
+    /* sort transactions by date in descending order */
+    transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    /* get the most recent 10 transactions */
+    const recentTransactions = transactions.slice(0, 10);
+
+    /* generate HTML for the recent transactions table */
+    const recentTransactionsHtml = recentTransactions.map(transaction => {
+        let isOutgoing = !iban.includes(transaction.recipientIBAN);
+        let transactionName = isOutgoing ? transaction.recipientName : transaction.senderName;
+
+        /* check if the category is "Cash Withdrawal" or "Cash Deposit" */
+        if (transaction.category === "Cash Withdrawal") {
+            transactionName = "Cash Withdrawal";
+            isOutgoing = true;
+        } else if (transaction.category === "Cash Deposit") {
+            transactionName = "Cash Deposit";
+            isOutgoing = false;
+        }
+
+        return `
+            <tr>
+                <td>${transactionName}</td>
+                <td style="color: ${isOutgoing ? 'red' : 'green'};">${transaction.amount}</td>
+                <td>${transaction.timestamp}</td>
+            </tr>
+        `;
+    }).join('');
+
     document.getElementById('recent-transactions').innerHTML = recentTransactionsHtml;
 }
 

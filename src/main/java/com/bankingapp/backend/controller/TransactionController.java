@@ -108,14 +108,20 @@ public class TransactionController {
 
             //set transaction info for sender
             transactionOut.setAccountId(senderAccount.getAccountId());
-            transactionOut.setRecipientIBAN(recipientIBAN);
+            transactionOut.setRecipientName(recipientName);
+            transactionOut.setRecipientIBAN(recipient.getIban());
             transactionOut.setAmount(amount);
             transactionOut.setTimestamp(new Timestamp(date.getTime()).toString());
+            transactionOut.setSenderIBAN(senderIBAN);
             transactionOut.setCategory(category);
-            transactionOut.setRecipientName(recipientName);
+            transactionOut.setSenderName(customer.getFirstName() + " " + customer.getLastName());
+
 
             //set transaction info for recipient
             transactionIn.setAccountId(recipient.getAccountId());
+            transactionIn.setRecipientName(recipientName);
+            transactionIn.setRecipientIBAN(recipient.getIban());
+            transactionIn.setRecipientIBAN(recipientIBAN);
             transactionIn.setSenderIBAN(senderIBAN);
             transactionIn.setAmount(amount);
             transactionIn.setTimestamp(new Timestamp(date.getTime()).toString());
@@ -124,6 +130,7 @@ public class TransactionController {
 
             //call methods to update the database
             logger.info("Your sender: {}, transactionOut: {}, accountId: {}", senderAccount, transactionOut, accountId);
+            logger.info("Your recipient: transactionIn: {}, accountId: {}", transactionIn, accountId);
             transactionService.sendMoney(senderAccount, transactionOut, accountId);
             transactionService.receiveMoney(recipient, transactionOut, recipientId);
             transactionService.makeNewTransaction(transactionOut);
@@ -153,6 +160,8 @@ public class TransactionController {
             /* Create transaction */
             Transaction transaction = new Transaction();
             transaction.setAccountId(accountId);
+            transaction.setRecipientName(customer.getFirstName() + " " + customer.getLastName());
+            transaction.setRecipientIBAN(opAccount.get().getIban());
             transaction.setSenderName("Cash Deposit");
             transaction.setSenderIBAN(opAccount.get().getIban());
             transaction.setAmount(amount);
