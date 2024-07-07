@@ -293,9 +293,11 @@ function populateTransactionsTable(transactions) {
 }
 /* function to update pagination controls */
 function updatePaginationControls() {
-    const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
+    /* add the limit to 20 for pages */
+    const totalPages = Math.min(Math.ceil(filteredTransactions.length / transactionsPerPage), 20);
     const pagination = document.getElementById('transactionPagination');
     pagination.innerHTML = '';
+
     /* create pagination buttons */
     for (let i = 1; i <= totalPages; i++) {
         const pageItem = document.createElement('li');

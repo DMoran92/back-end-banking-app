@@ -126,4 +126,31 @@ input[type=number] {
     -moz-appearance: textfield;
 }
 
+/* style for pagination buttons */
+.transactionPagination {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 0;
+    padding: 10px;
+    list-style: none;
+}
 
+#transactionPagination .page-item {
+    margin: 0 2px; /* add some margin for better smaller screen layout. */
+}
+
+.transactionPagination .page-link {
+    padding: 5px 10px;
+    color: steelblue;
+}
+
+.transactionPagination .page-link:hover {
+    background-color: GhostWhite;
+}
+
+.transactionPagination .page-item.active .page-link {
+    background-color: #0d6efd; /* primary button color of bootstrap */
+    color: white;
+    border: 1px solid #0d6efd;
+}
