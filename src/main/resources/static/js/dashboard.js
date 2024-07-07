@@ -884,7 +884,7 @@ window.onload = function() {
     loadFavouritePayees();
     loadCards();
     populateAccountDropdowns();
-
+    loadExchangeRates();
 };
 
 /* ensure only the 'home' section is shown by default and other sections are hidden */
@@ -1109,4 +1109,60 @@ function reverseAccounts() {
 
     /* Update the target accounts dropdown */
     updateTargetAccounts();
+}
+/* load exchange rates */
+async function loadExchangeRates() {
+    try {
+        const response = await fetchWithToken('/api/exchange-rates/latest');
+        // Process and display the exchange rates
+        populateExchangeRatesTable(response);
+    } catch (error) {
+        showErrorModal('Failed to load exchange rates: ' + error.message);
+    }
+}
+/* function to populate current currency exchange rates table */
+function populateExchangeRatesTable(rates) {
+    const tableBody = document.getElementById('exchangeRatesTableBody');
+    tableBody.innerHTML = '';
+
+    /* find rates for specific currencies */
+    const usdRate = rates.find(rate => rate.targetCurrency === 'USD');
+    const gbpRate = rates.find(rate => rate.targetCurrency === 'GBP');
+    const jpyRate = rates.find(rate => rate.targetCurrency === 'JPY');
+    const cnyRate = rates.find(rate => rate.targetCurrency === 'CNY');
+    const chfRate = rates.find(rate => rate.targetCurrency === 'CHF');
+
+    /* function to calculate percentage change and format the rate */
+    function formatRate(rate, previousRate) {
+        /* calculate the difference between current and previous rate */
+        let percentageChange = ((rate - previousRate) / previousRate * 100).toFixed(2);
+        /* so it doesnt show Infinity% */
+        if (!isFinite(percentageChange) || isNaN(percentageChange)) {
+            percentageChange = 0;
+        }
+        const color = rate > previousRate ? 'green' : 'red';
+        const arrow = rate > previousRate ? '↑' : '↓';
+        return `${rate.toFixed(2)} <span style="color: ${color};">${arrow} ${percentageChange}%</span>`;
+    }
+
+    /* Create a single row with all the rates */
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            ${formatRate(usdRate.rate, usdRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(gbpRate.rate, gbpRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(jpyRate.rate, jpyRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(cnyRate.rate, cnyRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(chfRate.rate, chfRate.previousRate)}
+        </td>
+    `;
+    tableBody.appendChild(row);
 }

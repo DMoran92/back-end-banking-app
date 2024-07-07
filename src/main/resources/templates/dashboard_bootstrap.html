@@ -53,6 +53,9 @@
                     <a href="#transfer-funds" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
                         <i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span>
                     </a>
+                    <a href="#currency-exchange" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-currency-exchange"></i> <span>Currency Exchange</span>
+                    </a>
                     <a href="#pay-bill" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
                         <i class="bi bi-file-ruled"></i> <span>Pay a Bill</span>
                     </a>
@@ -241,7 +244,27 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </form>
+                </div>
+                <!-- Currency exchange tab -->
+                <div class="tab-pane fade" id="currency-exchange" role="tabpanel">
+                    <h3>Currency Exchange Rates</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped favorite-payees-background">
+                            <thead>
+                            <tr>
+                                <th>USD</th>
+                                <th>GBP</th>
+                                <th>JPY</th>
+                                <th>CNY</th>
+                                <th>CHF</th>
+                            </tr>
+                            </thead>
+                            <tbody id="exchangeRatesTableBody">
+                            <!-- Exchange rates will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
+                </div>
                 <div class="tab-pane fade" id="pay-bill" role="tabpanel">
                     <h3>Pay a Bill</h3>
                     <p>Select a provider below to pay your bill:</p>
