@@ -2,9 +2,11 @@ package com.bankingapp.backend.controller;
 
 import com.bankingapp.backend.model.Account;
 import com.bankingapp.backend.model.Customer;
+import com.bankingapp.backend.model.ExchangeRate;
 import com.bankingapp.backend.model.Transaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
+import com.bankingapp.backend.repository.ExchangeRateRepository;
 import com.bankingapp.backend.service.TransactionService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
@@ -42,6 +45,9 @@ public class TransactionController {
 
     @Autowired
     private CustomerRepository customerRepository;
+
+    @Autowired
+    private ExchangeRateRepository exchangeRateRepository;
 
     @PostMapping("/makeTransaction/")
     public ResponseEntity<String> makeTransaction(@RequestBody Map<String, Object> payload){
@@ -214,4 +220,101 @@ public class TransactionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Account not found");
         }
     }
+
+    @PostMapping("/currency-conversion")
+    public ResponseEntity<String> handleCurrencyConversion(@RequestBody Map<String, Object> payload) {
+        /* get customer based on the username */
+        String username = getAuthenticatedUsername();
+        Customer customer = customerRepository.findByUsername(username);
+        /* extract from account / to account and the amount to be converted */
+        long fromAccountId = Long.parseLong(payload.get("fromAccountId").toString());
+        long toAccountId = Long.parseLong(payload.get("toAccountId").toString());
+        double amount = Double.parseDouble(payload.get("amount").toString());
+        /* check if both accounts exists */
+        Account fromAccount = accountRepository.findById(fromAccountId)
+                .orElseThrow(() -> new RuntimeException("From account not found"));
+        Account toAccount = accountRepository.findById(toAccountId)
+                .orElseThrow(() -> new RuntimeException("To account not found"));
+        /* make sure that the source account balance is enough */
+        if (fromAccount.getBalance() < amount) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Insufficient balance");
+        }
+        /* get the exchange rates */
+        double fromRate = getExchangeRate(fromAccount.getCurrency());
+        double toRate = getExchangeRate(toAccount.getCurrency());
+        /* Calculate converted amount with high degree of precision using BigDecimal's
+        * Note: This probably will be beneficial for other balances calculations */
+        BigDecimal convertedAmount = BigDecimal.valueOf(amount)
+                .divide(BigDecimal.valueOf(fromRate), 10, RoundingMode.HALF_UP)
+                .multiply(BigDecimal.valueOf(toRate))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        /* calculate the balances */
+        BigDecimal newFromBalance = BigDecimal.valueOf(fromAccount.getBalance())
+                .subtract(BigDecimal.valueOf(amount))
+                .setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal newToBalance = BigDecimal.valueOf(toAccount.getBalance())
+                .add(convertedAmount)
+                .setScale(2, RoundingMode.HALF_UP);
+
+        /* set the new balances for the accounts */
+        fromAccount.setBalance(newFromBalance.doubleValue());
+        toAccount.setBalance(newToBalance.doubleValue());
+        /* save the new balances in the db */
+        accountRepository.save(fromAccount);
+        accountRepository.save(toAccount);
+
+        /* create 2 transactions (as this it is internal in-between account transaction */
+        Transaction outTransaction = createTransaction(
+                fromAccountId,
+                amount,
+                "Currency Conversion",
+                toAccount.getIban(),
+                customer.getFirstName() + " " + customer.getLastName() + " Account",
+                fromAccount.getIban(),
+                customer.getFirstName() + " " + customer.getLastName() + " Account"
+        );
+
+        Transaction inTransaction = createTransaction(
+                toAccountId,
+                convertedAmount.doubleValue(),
+                "Currency Conversion",
+                toAccount.getIban(),
+                customer.getFirstName() + " " + customer.getLastName() + " Account",
+                fromAccount.getIban(),
+                customer.getFirstName() + " " + customer.getLastName() + " Account"
+        );
+        /* save the transactions in the database */
+        transactionService.makeNewTransaction(outTransaction);
+        transactionService.makeNewTransaction(inTransaction);
+
+        return ResponseEntity.ok("Currency conversion successful");
+    }
+
+    /* create a transaction */
+    private Transaction createTransaction(Long accountId, Double amount, String category, String recipientIBAN,
+                                          String recipientName, String senderIBAN, String senderName) {
+        Transaction transaction = new Transaction();
+        transaction.setAccountId(accountId);
+        transaction.setAmount(amount);
+        transaction.setCategory(category);
+        transaction.setRecipientIBAN(recipientIBAN);
+        transaction.setRecipientName(recipientName);
+        transaction.setTimestamp(new Timestamp(new Date().getTime()).toString());
+        transaction.setSenderIBAN(senderIBAN);
+        transaction.setSenderName(senderName);
+        return transaction;
+    }
+
+    /* default the rate to 1.0 if euro, otherwise read the rate stored in the table */
+    private double getExchangeRate(String currency) {
+        if (currency.equals("EUR")) {
+            return 1.0;
+        }
+
+        ExchangeRate exchangeRate = exchangeRateRepository.findByTargetCurrency(currency);
+        return exchangeRate != null ? exchangeRate.getRate() : 1.0;
+    }
+
 }

@@ -1117,6 +1117,32 @@ function updateTargetAccounts() {
         }
     });
 }
+/* function used to update the second selection in the currency conversion modal based on the selection
+   of the first element
+ */
+function updateCurrencyAccounts() {
+    const transferFromAccountSelect = document.getElementById('convertFromAccount');
+    const transferToAccountSelect = document.getElementById('convertToAccount');
+
+    const selectedFromAccountId = transferFromAccountSelect.value;
+    transferToAccountSelect.innerHTML = '';
+
+    /* clear the amount value */
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('convertedAmount').innerText = "";
+
+    customerAccounts.forEach(account => {
+        if (account.accountId !== parseInt(selectedFromAccountId) && (account.accountType === 'Current' || account.accountType === 'Currency')) {
+            const option = document.createElement('option');
+            option.value = account.accountId;
+            option.text = `Currency: ${account.currency} - ${account.iban}`;
+            /* attach attributes to each option, which will be used later on to calculate the converted balance */
+            option.setAttribute('currency', account.currency || 'EUR');
+            option.setAttribute('balance', account.balance);
+            transferToAccountSelect.appendChild(option);
+        }
+    });
+}
 
 /* function used to transfer balance between accounts */
 async function handleTransferBalance(event) {
@@ -1181,6 +1207,8 @@ async function loadExchangeRates() {
         const response = await fetchWithToken('/api/exchange-rates/latest');
         // Process and display the exchange rates
         populateExchangeRatesTable(response);
+        /* the response will be used in the conversion modal */
+        return response;
     } catch (error) {
         showErrorModal('Failed to load exchange rates: ' + error.message);
     }
@@ -1230,4 +1258,126 @@ function populateExchangeRatesTable(rates) {
         </td>
     `;
     tableBody.appendChild(row);
+}
+
+/* function responsible for populating the conversion modal */
+async function prepareCurrencyConversionModal() {
+    const rates = await loadExchangeRates();
+    /* check if rates were retrieved from backend */
+    if (!rates || rates.length === 0) {
+        console.error('Failed to load exchange rates');
+        return;
+    }
+    /* populate the initial from account selection on conversion modal */
+    const fromAccountSelect = document.getElementById('convertFromAccount');
+    fromAccountSelect.innerHTML = '';
+
+    customerAccounts.forEach(account => {
+        if (account.accountType === 'Current' || account.accountType === 'Currency') {
+            const option = document.createElement('option');
+            option.value = account.accountId;
+            option.text = `Currency: ${account.currency} - ${account.iban}`;
+            option.setAttribute('currency', account.currency);
+            option.setAttribute('balance', account.balance);
+            fromAccountSelect.appendChild(option);
+        }
+    });
+    /* populate the second selection on the conversion modal, it will omit currently selected from account selection
+       from the list
+     */
+    updateCurrencyAccounts();
+    /* clear the amount value */
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('convertedAmount').innerText = "";
+    /* trigger when user inputs the value into the field */
+    document.getElementById('convertAmount').addEventListener('input', function () {
+        const amount = parseFloat(this.value);
+        /* get the accounts selected */
+        const fromAccountSelect = document.getElementById('convertFromAccount');
+        const toAccountSelect = document.getElementById('convertToAccount');
+        /* get the currencies of the accounts */
+        const sourceCurrency = fromAccountSelect.options[fromAccountSelect.selectedIndex].getAttribute('currency');
+        const targetCurrency = toAccountSelect.options[toAccountSelect.selectedIndex].getAttribute('currency');
+        /* get the balance of the account */
+        const targetBalance = parseFloat(toAccountSelect.options[toAccountSelect.selectedIndex].getAttribute('balance'));
+
+        /* all the rates are in relation to euro in our database, but the user can convert for eq.
+           from USD to JPY. We first need to convert the value to euro and then apply our conversion rate.
+           For instance From USD to JPY account:
+           Convert USD to EUR
+           Convert EUR to JPY.
+           If the currency is EUR in one of the fields, the rate is 1 (base rate).
+           The code below has optional chaining operator "?". If the currency is not found for some reason, it will not
+           crash but default to "undefined". The || 1 will default the value to 1 if its undefined.
+         */
+        const sourceRateToEUR = sourceCurrency === 'EUR' ? 1 : rates.find(rate => rate.targetCurrency === sourceCurrency)?.rate || 1;
+        const targetRateFromEUR = targetCurrency === 'EUR' ? 1 : rates.find(rate => rate.targetCurrency === targetCurrency)?.rate || 1;
+
+        /* Convert the amount to EUR, then to the target currency */
+        const amountInEUR = amount / sourceRateToEUR;
+        const convertedAmount = amountInEUR * targetRateFromEUR;
+
+        document.getElementById('convertedAmount').innerText = convertedAmount.toFixed(2) + " " + targetCurrency;
+    });
+}
+
+/* add listener to trigger the building of the conversion modal data if the button in pressed */
+document.getElementById('currencyConversionModal').addEventListener('show.bs.modal', prepareCurrencyConversionModal);
+
+/* function used to trigger the conversion on the backend */
+async function handleCurrencyConversion(event) {
+    event.preventDefault();
+
+    const fromAccountId = document.getElementById('convertFromAccount').value;
+    const toAccountId = document.getElementById('convertToAccount').value;
+    const amount = document.getElementById('convertAmount').value;
+
+    const payload = {
+        fromAccountId: fromAccountId,
+        toAccountId: toAccountId,
+        amount: amount
+    };
+
+    try {
+        const response = await fetchWithToken('/transaction/currency-conversion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('currencyConversionModal'));
+        if (currencyConversionModal) {
+            currencyConversionModal.hide();
+        }
+        if (response.includes("success")) {
+            showSuccessMessage("Currency conversion applied successfully.");
+        } else {
+            showErrorModal('Conversion failed. Please try again later ');
+        }
+    } catch (error) {
+        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('currencyConversionModal'));
+        if (currencyConversionModal) {
+            currencyConversionModal.hide();
+        }
+        showErrorModal(error);
+    }
+}
+
+/* Function to reverse the accounts on the currency modal */
+function reverseCurrencyAccounts() {
+    const fromAccountSelect = document.getElementById('convertFromAccount');
+    const toAccountSelect = document.getElementById('convertToAccount');
+
+    const fromAccountId = fromAccountSelect.value;
+    const toAccountId = toAccountSelect.value;
+
+    fromAccountSelect.value = toAccountId;
+    updateCurrencyAccounts();
+    toAccountSelect.value = fromAccountId;
+    /* clear the amount value */
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('convertedAmount').innerText = "";
+
 }

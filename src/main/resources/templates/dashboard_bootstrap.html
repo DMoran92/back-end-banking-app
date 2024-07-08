@@ -263,6 +263,8 @@
                             </tbody>
                         </table>
                     </div>
+                    <!-- button used to show currency conversion modal -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#currencyConversionModal">Exchange Currency</button>
                 </div>
                 <div class="tab-pane fade" id="pay-bill" role="tabpanel">
                     <h3>Pay a Bill</h3>
@@ -549,6 +551,43 @@
                     <div class="form-group mb-3">
                         <label for="transferAmount">Amount:</label>
                         <input type="number" class="form-control" id="transferAmount" placeholder="Enter amount" step="0.01" min="0" max="999999">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- currency conversion modal -->
+<div class="modal fade" id="currencyConversionModal" tabindex="-1" aria-labelledby="currencyConversionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="currencyConversionModalLabel">Currency Conversion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="currencyConversionForm" onsubmit="handleCurrencyConversion(event)">
+                    <div class="form-group mb-3">
+                        <label for="convertFromAccount">From Account:</label>
+                        <select class="form-select" id="convertFromAccount" onchange="updateCurrencyAccounts()"></select>
+                    </div>
+                    <div class="text-center mb-3">
+                        <button type="button" class="btn btn-secondary" onclick="reverseCurrencyAccounts()">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </button>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="convertToAccount">To Account:</label>
+                        <select class="form-select" id="convertToAccount"></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="convertAmount">Amount:</label>
+                        <input type="number" class="form-control" id="convertAmount" placeholder="Enter amount" step="0.01" min="0" max="99999" maxlength="5">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="convertedAmount">Resulting Balance:</label>
+                        <p id="convertedAmount" class="form-control-plaintext"></p>
                     </div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
