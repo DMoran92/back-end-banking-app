@@ -112,6 +112,8 @@ public class DashboardController {
         logger.info("accountType: {}", accountType);
 
         Account newAccount = new Account(customerId, accountType, 0);
+        /* add currency to the account */
+        newAccount.setCurrency(payload.get("currency").toString());
         newAccountServiceImpl.addNewAccount(newAccount);
 
         return "redirect:/dashboard";

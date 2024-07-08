@@ -805,6 +805,7 @@ async function makeAccount(event){
     event.preventDefault();
     /* Get the customer ID and password from the form fields */
     const accountType = document.getElementById('accountType').value;
+    const currency = accountType === 'Currency' ? document.getElementById('accountCurrency').value : 'EUR';
 
     /* Make a POST request to the /api/authenticate endpoint */
     const response = await fetch('/dashboard/makeAccount/', {
@@ -813,7 +814,7 @@ async function makeAccount(event){
             'Content-Type': 'application/json'
         },
         /* Convert the username and password to a JSON string and include it in the request body */
-        body: JSON.stringify({ accountType: accountType })
+        body: JSON.stringify({ accountType: accountType, currency: currency })
     });
     /* If the response is OK, redirect to the dashboard page */
     if (response.ok) {
@@ -828,6 +829,15 @@ async function makeAccount(event){
         showErrorModal('Account creation failed! Please try again later ');
     }
 }
+/* show the currency selection for currency accounts */
+document.getElementById('accountType').addEventListener('change', function() {
+    if (this.value === 'Currency') {
+        document.getElementById('currencySelection').style.display = 'block';
+    } else {
+        document.getElementById('currencySelection').style.display = 'none';
+    }
+});
+
 /* function used to populate user profile */
 async function showUserProfile() {
     try {

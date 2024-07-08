@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
-
+<body>
 <nav class="navbar navbar-expand-lg banner fixed-top flex-md-nowrap p-0">
     <div class="container-fluid banner">
         <a class="navbar-brand banner align-middle" href="/dashboard"><i class="bi bi-bank icon-45"></i> Bank of Galway</a>
@@ -304,6 +304,16 @@
                                 <option value="Current">Current</option>
                                 <option value="Savings">Savings</option>
                                 <option value="Currency">Currency</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3" id="currencySelection" style="display: none;">
+                            <label for="accountCurrency">Currency:</label>
+                            <select class="form-select" id="accountCurrency">
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                                <option value="JPY">JPY</option>
+                                <option value="CNY">CNY</option>
+                                <option value="CHF">CHF</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>

@@ -20,6 +20,8 @@ public class Account {
     private double balance;
     @Column(name = "IBAN")
     private String iban;
+    @Column(name = "Currency")
+    private String currency = "EUR";
 
     @OneToMany (fetch = FetchType.EAGER)
     @JoinColumn(name = "AccountId", referencedColumnName = "AccountId")
@@ -78,4 +80,8 @@ public class Account {
     public void setTransactions(List<Transaction> transactions) {
         this.transactions = transactions;
     }
+
+    public String getCurrency() { return currency; }
+
+    public void setCurrency(String currency) { this.currency = currency; }
 }
