@@ -15,7 +15,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
-
+<body>
 <nav class="navbar navbar-expand-lg banner fixed-top flex-md-nowrap p-0">
     <div class="container-fluid banner">
         <a class="navbar-brand banner align-middle" href="/dashboard"><i class="bi bi-bank icon-45"></i> Bank of Galway</a>
@@ -52,6 +52,9 @@
                     </a>
                     <a href="#transfer-funds" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
                         <i class="bi bi-arrow-left-right"></i> <span>Transfer Funds</span>
+                    </a>
+                    <a href="#currency-exchange" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
+                        <i class="bi bi-currency-exchange"></i> <span>Currency Exchange</span>
                     </a>
                     <a href="#pay-bill" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
                         <i class="bi bi-file-ruled"></i> <span>Pay a Bill</span>
@@ -108,7 +111,7 @@
                                         <table class="table">
                                             <thead>
                                             <tr>
-                                                <th>Recipient</th>
+                                                <th>Name</th>
                                                 <th>Amount</th>
                                                 <th>Date</th>
                                             </tr>
@@ -165,7 +168,6 @@
                                 <table class="table">
                                     <thead>
                                     <tr>
-                                        <th>Type</th>
                                         <th>Name</th>
                                         <th>Amount</th>
                                         <th>Category</th>
@@ -178,7 +180,7 @@
                             </div>
                             <div class="card-footer">
                                 <nav>
-                                    <ul class="pagination justify-content-center" id="transactionPagination">
+                                    <ul class="pagination justify-content-center transactionPagination" id="transactionPagination">
                                     </ul>
                                 </nav>
                             </div>
@@ -241,7 +243,29 @@
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
                     </form>
+                </div>
+                <!-- Currency exchange tab -->
+                <div class="tab-pane fade" id="currency-exchange" role="tabpanel">
+                    <h3>Currency Exchange Rates</h3>
+                    <div class="table-responsive">
+                        <table class="table table-striped favorite-payees-background">
+                            <thead>
+                            <tr>
+                                <th>USD</th>
+                                <th>GBP</th>
+                                <th>JPY</th>
+                                <th>CNY</th>
+                                <th>CHF</th>
+                            </tr>
+                            </thead>
+                            <tbody id="exchangeRatesTableBody">
+                            <!-- Exchange rates will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
+                    <!-- button used to show currency conversion modal -->
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#currencyConversionModal">Exchange Currency</button>
+                </div>
                 <div class="tab-pane fade" id="pay-bill" role="tabpanel">
                     <h3>Pay a Bill</h3>
                     <p>Select a provider below to pay your bill:</p>
@@ -282,6 +306,16 @@
                                 <option value="Current">Current</option>
                                 <option value="Savings">Savings</option>
                                 <option value="Currency">Currency</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3" id="currencySelection" style="display: none;">
+                            <label for="accountCurrency">Currency:</label>
+                            <select class="form-select" id="accountCurrency">
+                                <option value="USD">USD</option>
+                                <option value="GBP">GBP</option>
+                                <option value="JPY">JPY</option>
+                                <option value="CNY">CNY</option>
+                                <option value="CHF">CHF</option>
                             </select>
                         </div>
                         <button type="submit" class="btn btn-primary">Submit</button>
@@ -517,6 +551,43 @@
                     <div class="form-group mb-3">
                         <label for="transferAmount">Amount:</label>
                         <input type="number" class="form-control" id="transferAmount" placeholder="Enter amount" step="0.01" min="0" max="999999">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- currency conversion modal -->
+<div class="modal fade" id="currencyConversionModal" tabindex="-1" aria-labelledby="currencyConversionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="currencyConversionModalLabel">Currency Conversion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="currencyConversionForm" onsubmit="handleCurrencyConversion(event)">
+                    <div class="form-group mb-3">
+                        <label for="convertFromAccount">From Account:</label>
+                        <select class="form-select" id="convertFromAccount" onchange="updateCurrencyAccounts()"></select>
+                    </div>
+                    <div class="text-center mb-3">
+                        <button type="button" class="btn btn-secondary" onclick="reverseCurrencyAccounts()">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </button>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="convertToAccount">To Account:</label>
+                        <select class="form-select" id="convertToAccount"></select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="convertAmount">Amount:</label>
+                        <input type="number" class="form-control" id="convertAmount" placeholder="Enter amount" step="0.01" min="0" max="99999" maxlength="5">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label for="convertedAmount">Resulting Balance:</label>
+                        <p id="convertedAmount" class="form-control-plaintext"></p>
                     </div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>

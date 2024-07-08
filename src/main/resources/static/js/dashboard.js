@@ -79,17 +79,18 @@ function populateDashboard(data) {
         document.getElementById('account-details').innerHTML = accountsHtml;
 
         /* populate recent transactions for the selected account */
-        populateRecentTransactions(data.customer.accounts[accountRefIndex].transactions);
+        populateRecentTransactions(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
         /* Process recent and monthly expenditure graphs for selected account */
-        processRecentExpenditure(data.customer.accounts[accountRefIndex].transactions);
-        processMonthlyExpenditure(data.customer.accounts[accountRefIndex].transactions);
+        processRecentExpenditure(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
+        processMonthlyExpenditure(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
     } else {
         console.error('Customer data is missing or malformed', data);
     }
 }
 
 let recentExpenditureChart = null;
-function processRecentExpenditure(transactions) {
+function processRecentExpenditure(iban,transactions) {
+
     /* define the categories for expenditure */
     const categories = ['Dining', 'Entertainment', 'Groceries', 'Healthcare', 'Other', 'Personal', 'Transport', 'Utilities'];
     const categorySums = {};
@@ -111,7 +112,9 @@ function processRecentExpenditure(transactions) {
     /* sum transactions by category */
     last30Days.forEach(transaction => {
         if (categorySums.hasOwnProperty(transaction.category)) {
-            categorySums[transaction.category] += Math.abs(transaction.amount);
+            if (!iban.includes(transaction.recipientIBAN)) { // Only add outgoing transactions
+                categorySums[transaction.category] += Math.abs(transaction.amount);
+            }
         }
     });
 
@@ -153,7 +156,8 @@ function processRecentExpenditure(transactions) {
 }
 
 let monthlyExpenditureChart = null;
-function processMonthlyExpenditure(transactions) {
+function processMonthlyExpenditure(iban,transactions) {
+
     /* initialize an object to store the sums for each month */
     const monthlySums = {};
     /* iterate over each transaction */
@@ -164,8 +168,10 @@ function processMonthlyExpenditure(transactions) {
         if (!monthlySums[yearMonth]) {
             monthlySums[yearMonth] = 0;
         }
-        /* add the transaction amount to the monthly sum */
-        monthlySums[yearMonth] += Math.abs(transaction.amount);
+        if (!iban.includes(transaction.recipientIBAN)) { // Only add outgoing transactions
+            /* add the transaction amount to the monthly sum */
+            monthlySums[yearMonth] += Math.abs(transaction.amount);
+        }
     });
 
     /* prepare data for the chart */
@@ -207,7 +213,8 @@ function processMonthlyExpenditure(transactions) {
 /* used for transactions enquiry pagination for better viewing experience */
 let transactionsPerPage = 10;
 let currentTransactionPage = 1;
-let filteredTransactions = [];
+let filteredTransactions = []
+let selectedIban = "";
 
 function filterTransactions() {
     const selectedAccountId = document.getElementById('accountSelect').value;
@@ -226,6 +233,7 @@ function filterTransactions() {
     endDate.setHours(23, 59, 59, 999);
 
     const selectedAccount = customerAccounts.find(account => account.accountId == selectedAccountId);
+    selectedIban = selectedAccount.iban;
     /* display error if selected account doesnt exists. */
     if (!selectedAccount) {
         showErrorModal('Selected account not found.');
@@ -256,23 +264,40 @@ function populateTransactionsTable(transactions) {
         document.getElementById('transactionsTable').innerHTML = `<tr><td colspan="5" class="text-center">--- NO TRANSACTIONS FOR THIS PERIOD ---</td></tr>`;
         return;
     }
+
     /* generate HTML for each transaction */
-    const transactionsHtml = transactions.map(transaction => `
-        <tr>
-            <td>${transaction.recipientIBAN ? 'Outgoing' : 'Incoming'}</td>
-            <td>${transaction.recipientName || transaction.senderName}</td>
-            <td style="color: ${transaction.recipientIBAN ? 'red' : 'green'};">${transaction.amount}</td>
-            <td>${transaction.category}</td>
-            <td>${transaction.timestamp}</td>
-        </tr>
-    `).join('');
+    const transactionsHtml = transactions.map(transaction => {
+        let isOutgoing = !selectedIban.includes(transaction.recipientIBAN);
+        let transactionName = isOutgoing ? transaction.recipientName : transaction.senderName;
+
+        /* check if the category is "Cash Withdrawal" or "Cash Deposit" */
+        if (transaction.category === "Cash Withdrawal") {
+            transactionName = "Cash Withdrawal";
+            isOutgoing = true;
+        } else if (transaction.category === "Cash Deposit") {
+            transactionName = "Cash Deposit";
+            isOutgoing = false;
+        }
+
+        return `
+            <tr>
+                <td>${transactionName}</td>
+                <td style="color: ${isOutgoing ? 'red' : 'green'};">${transaction.amount}</td>
+                <td>${transaction.category}</td>
+                <td>${transaction.timestamp}</td>
+            </tr>
+        `;
+    }).join('');
+
     document.getElementById('transactionsTable').innerHTML = transactionsHtml;
 }
 /* function to update pagination controls */
 function updatePaginationControls() {
-    const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
+    /* add the limit to 20 for pages */
+    const totalPages = Math.min(Math.ceil(filteredTransactions.length / transactionsPerPage), 20);
     const pagination = document.getElementById('transactionPagination');
     pagination.innerHTML = '';
+
     /* create pagination buttons */
     for (let i = 1; i <= totalPages; i++) {
         const pageItem = document.createElement('li');
@@ -286,16 +311,37 @@ function changeTransactionPage(page) {
     currentTransactionPage = page;
     paginateTransactions();
 }
-/* function to populate the recent transactions table */
-function populateRecentTransactions(transactions) {
-    const recentTransactions = transactions.slice(0, 10); // Get the most recent 10 transactions
-    const recentTransactionsHtml = recentTransactions.map(transaction => `
-        <tr>
-            <td>${transaction.recipientName || transaction.senderName}</td>
-            <td style="color: ${transaction.recipientIBAN ? 'red' : 'green'};">${transaction.amount}</td>
-            <td>${transaction.timestamp}</td>
-        </tr>
-    `).join('');
+/* Function to populate the recent transactions table */
+function populateRecentTransactions(iban,transactions) {
+    /* sort transactions by date in descending order */
+    transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    /* get the most recent 10 transactions */
+    const recentTransactions = transactions.slice(0, 10);
+
+    /* generate HTML for the recent transactions table */
+    const recentTransactionsHtml = recentTransactions.map(transaction => {
+        let isOutgoing = !iban.includes(transaction.recipientIBAN);
+        let transactionName = isOutgoing ? transaction.recipientName : transaction.senderName;
+
+        /* check if the category is "Cash Withdrawal" or "Cash Deposit" */
+        if (transaction.category === "Cash Withdrawal") {
+            transactionName = "Cash Withdrawal";
+            isOutgoing = true;
+        } else if (transaction.category === "Cash Deposit") {
+            transactionName = "Cash Deposit";
+            isOutgoing = false;
+        }
+
+        return `
+            <tr>
+                <td>${transactionName}</td>
+                <td style="color: ${isOutgoing ? 'red' : 'green'};">${transaction.amount}</td>
+                <td>${transaction.timestamp}</td>
+            </tr>
+        `;
+    }).join('');
+
     document.getElementById('recent-transactions').innerHTML = recentTransactionsHtml;
 }
 
@@ -303,6 +349,15 @@ function populateRecentTransactions(transactions) {
 function showErrorModal(message) {
     const errorModal = new bootstrap.Modal(document.getElementById('errorModal'), {});
     document.getElementById('errorModalBody').innerText = message;
+
+    /* we currently only have one case of possible 2 modals displaying at the same time.
+       this might need to be changed later.
+     */
+    const transferModal = bootstrap.Modal.getInstance(document.getElementById('transferBalanceModal'));
+    if (transferModal) {
+        transferModal.hide();
+    }
+
     errorModal.show();
 }
 /* pop success modal */
@@ -750,6 +805,7 @@ async function makeAccount(event){
     event.preventDefault();
     /* Get the customer ID and password from the form fields */
     const accountType = document.getElementById('accountType').value;
+    const currency = accountType === 'Currency' ? document.getElementById('accountCurrency').value : 'EUR';
 
     /* Make a POST request to the /api/authenticate endpoint */
     const response = await fetch('/dashboard/makeAccount/', {
@@ -758,7 +814,7 @@ async function makeAccount(event){
             'Content-Type': 'application/json'
         },
         /* Convert the username and password to a JSON string and include it in the request body */
-        body: JSON.stringify({ accountType: accountType })
+        body: JSON.stringify({ accountType: accountType, currency: currency })
     });
     /* If the response is OK, redirect to the dashboard page */
     if (response.ok) {
@@ -773,6 +829,15 @@ async function makeAccount(event){
         showErrorModal('Account creation failed! Please try again later ');
     }
 }
+/* show the currency selection for currency accounts */
+document.getElementById('accountType').addEventListener('change', function() {
+    if (this.value === 'Currency') {
+        document.getElementById('currencySelection').style.display = 'block';
+    } else {
+        document.getElementById('currencySelection').style.display = 'none';
+    }
+});
+
 /* function used to populate user profile */
 async function showUserProfile() {
     try {
@@ -884,7 +949,7 @@ window.onload = function() {
     loadFavouritePayees();
     loadCards();
     populateAccountDropdowns();
-
+    loadExchangeRates();
 };
 
 /* ensure only the 'home' section is shown by default and other sections are hidden */
@@ -1052,6 +1117,32 @@ function updateTargetAccounts() {
         }
     });
 }
+/* function used to update the second selection in the currency conversion modal based on the selection
+   of the first element
+ */
+function updateCurrencyAccounts() {
+    const transferFromAccountSelect = document.getElementById('convertFromAccount');
+    const transferToAccountSelect = document.getElementById('convertToAccount');
+
+    const selectedFromAccountId = transferFromAccountSelect.value;
+    transferToAccountSelect.innerHTML = '';
+
+    /* clear the amount value */
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('convertedAmount').innerText = "";
+
+    customerAccounts.forEach(account => {
+        if (account.accountId !== parseInt(selectedFromAccountId) && (account.accountType === 'Current' || account.accountType === 'Currency')) {
+            const option = document.createElement('option');
+            option.value = account.accountId;
+            option.text = `Currency: ${account.currency} - ${account.iban}`;
+            /* attach attributes to each option, which will be used later on to calculate the converted balance */
+            option.setAttribute('currency', account.currency || 'EUR');
+            option.setAttribute('balance', account.balance);
+            transferToAccountSelect.appendChild(option);
+        }
+    });
+}
 
 /* function used to transfer balance between accounts */
 async function handleTransferBalance(event) {
@@ -1109,4 +1200,184 @@ function reverseAccounts() {
 
     /* Update the target accounts dropdown */
     updateTargetAccounts();
+}
+/* load exchange rates */
+async function loadExchangeRates() {
+    try {
+        const response = await fetchWithToken('/api/exchange-rates/latest');
+        // Process and display the exchange rates
+        populateExchangeRatesTable(response);
+        /* the response will be used in the conversion modal */
+        return response;
+    } catch (error) {
+        showErrorModal('Failed to load exchange rates: ' + error.message);
+    }
+}
+/* function to populate current currency exchange rates table */
+function populateExchangeRatesTable(rates) {
+    const tableBody = document.getElementById('exchangeRatesTableBody');
+    tableBody.innerHTML = '';
+
+    /* find rates for specific currencies */
+    const usdRate = rates.find(rate => rate.targetCurrency === 'USD');
+    const gbpRate = rates.find(rate => rate.targetCurrency === 'GBP');
+    const jpyRate = rates.find(rate => rate.targetCurrency === 'JPY');
+    const cnyRate = rates.find(rate => rate.targetCurrency === 'CNY');
+    const chfRate = rates.find(rate => rate.targetCurrency === 'CHF');
+
+    /* function to calculate percentage change and format the rate */
+    function formatRate(rate, previousRate) {
+        /* calculate the difference between current and previous rate */
+        let percentageChange = ((rate - previousRate) / previousRate * 100).toFixed(2);
+        /* so it doesnt show Infinity% */
+        if (!isFinite(percentageChange) || isNaN(percentageChange)) {
+            percentageChange = 0;
+        }
+        const color = rate > previousRate ? 'green' : 'red';
+        const arrow = rate > previousRate ? '↑' : '↓';
+        return `${rate.toFixed(2)} <span style="color: ${color};">${arrow} ${percentageChange}%</span>`;
+    }
+
+    /* Create a single row with all the rates */
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            ${formatRate(usdRate.rate, usdRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(gbpRate.rate, gbpRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(jpyRate.rate, jpyRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(cnyRate.rate, cnyRate.previousRate)}
+        </td>
+        <td>
+            ${formatRate(chfRate.rate, chfRate.previousRate)}
+        </td>
+    `;
+    tableBody.appendChild(row);
+}
+
+/* function responsible for populating the conversion modal */
+async function prepareCurrencyConversionModal() {
+    const rates = await loadExchangeRates();
+    /* check if rates were retrieved from backend */
+    if (!rates || rates.length === 0) {
+        console.error('Failed to load exchange rates');
+        return;
+    }
+    /* populate the initial from account selection on conversion modal */
+    const fromAccountSelect = document.getElementById('convertFromAccount');
+    fromAccountSelect.innerHTML = '';
+
+    customerAccounts.forEach(account => {
+        if (account.accountType === 'Current' || account.accountType === 'Currency') {
+            const option = document.createElement('option');
+            option.value = account.accountId;
+            option.text = `Currency: ${account.currency} - ${account.iban}`;
+            option.setAttribute('currency', account.currency);
+            option.setAttribute('balance', account.balance);
+            fromAccountSelect.appendChild(option);
+        }
+    });
+    /* populate the second selection on the conversion modal, it will omit currently selected from account selection
+       from the list
+     */
+    updateCurrencyAccounts();
+    /* clear the amount value */
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('convertedAmount').innerText = "";
+    /* trigger when user inputs the value into the field */
+    document.getElementById('convertAmount').addEventListener('input', function () {
+        const amount = parseFloat(this.value);
+        /* get the accounts selected */
+        const fromAccountSelect = document.getElementById('convertFromAccount');
+        const toAccountSelect = document.getElementById('convertToAccount');
+        /* get the currencies of the accounts */
+        const sourceCurrency = fromAccountSelect.options[fromAccountSelect.selectedIndex].getAttribute('currency');
+        const targetCurrency = toAccountSelect.options[toAccountSelect.selectedIndex].getAttribute('currency');
+        /* get the balance of the account */
+        const targetBalance = parseFloat(toAccountSelect.options[toAccountSelect.selectedIndex].getAttribute('balance'));
+
+        /* all the rates are in relation to euro in our database, but the user can convert for eq.
+           from USD to JPY. We first need to convert the value to euro and then apply our conversion rate.
+           For instance From USD to JPY account:
+           Convert USD to EUR
+           Convert EUR to JPY.
+           If the currency is EUR in one of the fields, the rate is 1 (base rate).
+           The code below has optional chaining operator "?". If the currency is not found for some reason, it will not
+           crash but default to "undefined". The || 1 will default the value to 1 if its undefined.
+         */
+        const sourceRateToEUR = sourceCurrency === 'EUR' ? 1 : rates.find(rate => rate.targetCurrency === sourceCurrency)?.rate || 1;
+        const targetRateFromEUR = targetCurrency === 'EUR' ? 1 : rates.find(rate => rate.targetCurrency === targetCurrency)?.rate || 1;
+
+        /* Convert the amount to EUR, then to the target currency */
+        const amountInEUR = amount / sourceRateToEUR;
+        const convertedAmount = amountInEUR * targetRateFromEUR;
+
+        document.getElementById('convertedAmount').innerText = convertedAmount.toFixed(2) + " " + targetCurrency;
+    });
+}
+
+/* add listener to trigger the building of the conversion modal data if the button in pressed */
+document.getElementById('currencyConversionModal').addEventListener('show.bs.modal', prepareCurrencyConversionModal);
+
+/* function used to trigger the conversion on the backend */
+async function handleCurrencyConversion(event) {
+    event.preventDefault();
+
+    const fromAccountId = document.getElementById('convertFromAccount').value;
+    const toAccountId = document.getElementById('convertToAccount').value;
+    const amount = document.getElementById('convertAmount').value;
+
+    const payload = {
+        fromAccountId: fromAccountId,
+        toAccountId: toAccountId,
+        amount: amount
+    };
+
+    try {
+        const response = await fetchWithToken('/transaction/currency-conversion', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('currencyConversionModal'));
+        if (currencyConversionModal) {
+            currencyConversionModal.hide();
+        }
+        if (response.includes("success")) {
+            showSuccessMessage("Currency conversion applied successfully.");
+        } else {
+            showErrorModal('Conversion failed. Please try again later ');
+        }
+    } catch (error) {
+        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('currencyConversionModal'));
+        if (currencyConversionModal) {
+            currencyConversionModal.hide();
+        }
+        showErrorModal(error);
+    }
+}
+
+/* Function to reverse the accounts on the currency modal */
+function reverseCurrencyAccounts() {
+    const fromAccountSelect = document.getElementById('convertFromAccount');
+    const toAccountSelect = document.getElementById('convertToAccount');
+
+    const fromAccountId = fromAccountSelect.value;
+    const toAccountId = toAccountSelect.value;
+
+    fromAccountSelect.value = toAccountId;
+    updateCurrencyAccounts();
+    toAccountSelect.value = fromAccountId;
+    /* clear the amount value */
+    document.getElementById('convertAmount').value = "";
+    document.getElementById('convertedAmount').innerText = "";
+
 }
