@@ -5,8 +5,11 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.Transaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
+import com.bankingapp.backend.service.MailService;
 import com.bankingapp.backend.service.NewAccountServiceImpl;
 import com.bankingapp.backend.service.TransactionService;
+import com.mailjet.client.errors.MailjetException;
+import com.mailjet.client.errors.MailjetSocketTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +42,7 @@ public class DashboardController {
     private NewAccountServiceImpl newAccountServiceImpl;
 
     @GetMapping("/")
-    public ResponseEntity<Map<String, Object>> getCustomerDashboard()  {
+    public ResponseEntity<Map<String, Object>> getCustomerDashboard() throws MailjetSocketTimeoutException, MailjetException {
         logger.info("Entering getCustomerDashboard");
 
         /* get the authenticated user's username */
@@ -114,6 +117,28 @@ public class DashboardController {
         Account newAccount = new Account(customerId, accountType, 0);
         newAccountServiceImpl.addNewAccount(newAccount);
 
+        return "redirect:/dashboard";
+    }
+
+    @PostMapping("/contactUs/")
+    public String contactUs(@RequestBody Map<String, Object> payload) throws MailjetSocketTimeoutException, MailjetException {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        String username = userDetails.getUsername();
+
+        Customer customer = customerRepository.findByUsername(username);
+        int customerId = customer.getCustomerId();
+        String firstName = customer.getFirstName();
+        String lastName = customer.getLastName();
+        String email = customer.getEmail();
+
+        MailService ms = new MailService();
+
+        logger.info("Your payload: {}", payload.toString());
+        String mailText = payload.get("mailText").toString();
+        logger.info("mailText: {}", mailText);
+
+        ms.sendMail(mailText, username, firstName, lastName, email, customerId);
         return "redirect:/dashboard";
     }
 }
