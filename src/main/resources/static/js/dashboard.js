@@ -815,12 +815,10 @@ async function contactUs(event){
     /* If the response is OK, redirect to the dashboard page */
     if (response.ok) {
         showSuccessMessage("Request sent successfully.");
-        /* Refresh the dashboard to show the new account */
-        await loadDashboard();
-        /* Redirect to home tab */
-        window.location.hash = '#home';
-        var homeTab = new bootstrap.Tab(document.querySelector('a[href="#home"]'));
-        homeTab.show();
+        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('contactUsModal'));
+        if (currencyConversionModal) {
+            currencyConversionModal.hide();
+        }
     } else {
         showErrorModal('Request failed! Please try again later ');
     }

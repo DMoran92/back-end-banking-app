@@ -11,7 +11,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 public class MailService {
-    public void sendMail(String mailText, String username, String firstName, String lastName, String email, int customerId) throws MailjetException, MailjetSocketTimeoutException {
+    public void sendMail(String mailText, String firstName, String lastName, String email, int customerId) throws MailjetException, MailjetSocketTimeoutException {
         MailjetClient client;
         MailjetRequest request;
         MailjetResponse response;
@@ -27,10 +27,9 @@ public class MailService {
                                                 .put("Email", "bogy.help.receiver@hotmail.com")
                                                 .put("Name", "Bank")))
                                 .put(Emailv31.Message.SUBJECT, "Bank Support Request From " + firstName + " " + lastName)
-                                .put(Emailv31.Message.TEXTPART, "Customer name: " + firstName + " " + lastName + " \n" +
-                                                                "Customer username: " + username + " \n " +
-                                                                "Customer E-Mail: " + email + " \n " +
-                                                                "Customer ID: " + customerId + " \n\n" +
+                                .put(Emailv31.Message.TEXTPART, "Customer name: " + firstName + " " + lastName + "\n" +
+                                                                "Customer E-Mail: " + email + "\n" +
+                                                                "Customer ID: " + customerId + "\n\n" +
                                                                 "Message text: " + mailText)));
         response = client.post(request);
         System.out.println(response.getStatus());
