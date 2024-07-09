@@ -5,6 +5,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import java.security.SecureRandom;
 import java.util.Random;
 
 public class Utils {
@@ -34,5 +36,15 @@ public class Utils {
             cardNumber.append(digit);
         }
         return cardNumber.toString();
+    }
+
+    /* utility function used to generate 5-digit 2FA code */
+    public static String generate2FACode() {
+        Random random = new SecureRandom();
+        StringBuilder code = new StringBuilder();
+        for (int i = 0; i < 5; i++) {
+            code.append(random.nextInt(10));
+        }
+        return code.toString();
     }
 }

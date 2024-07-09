@@ -47,7 +47,7 @@ public class SecurityConfig {
                                 "/api/register",
                                 "/favicon.ico",
                                 "/css/**",
-                                "/debug-list").permitAll()
+                                "/api/validate-2fa").permitAll()
                         /* Require authentication for all other requests */
                         .anyRequest().authenticated()
                 )
