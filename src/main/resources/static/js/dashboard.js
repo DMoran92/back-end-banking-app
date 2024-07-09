@@ -855,6 +855,39 @@ async function showUserProfile() {
         showErrorModal('Failed to load user profile');
     }
 }
+
+async function showContactUs() {
+    const contactUsModal = new bootstrap.Modal(document.getElementById('contactUsModal'));
+    contactUsModal.show();
+}
+
+
+async function contactUs(event){
+    /* prevent default submission behaviour */
+    event.preventDefault();
+    /* Get the customer ID and password from the form fields */
+    const mailText = document.getElementById('mailText').value;
+
+    /* Make a POST request to the /api/authenticate endpoint */
+    const response = await fetch('/dashboard/contactUs/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        /* Convert the username and password to a JSON string and include it in the request body */
+        body: JSON.stringify({ mailText: mailText })
+    });
+    /* If the response is OK, redirect to the dashboard page */
+    if (response.ok) {
+        showSuccessMessage("Request sent successfully.");
+        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('contactUsModal'));
+        if (currencyConversionModal) {
+            currencyConversionModal.hide();
+        }
+    } else {
+        showErrorModal('Request failed! Please try again later ');
+    }
+}
 /* function used to deposit or withdraw balance from the accounts */
 async function handleDepositWithdraw(event) {
     event.preventDefault();
