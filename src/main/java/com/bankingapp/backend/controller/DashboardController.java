@@ -138,7 +138,7 @@ public class DashboardController {
         String mailText = payload.get("mailText").toString();
         logger.info("mailText: {}", mailText);
 
-        ms.sendMail(mailText, username, firstName, lastName, customerId);
+        ms.sendMail(mailText , firstName, lastName, email, customerId);
         return "redirect:/dashboard";
     }
 }
