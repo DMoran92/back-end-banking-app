@@ -15,7 +15,7 @@ public class MailService {
         MailjetClient client;
         MailjetRequest request;
         MailjetResponse response;
-        client = new MailjetClient("MAIL_API_KEY", "MAIL_API_SECRET", new ClientOptions("v3.1"));
+        client = new MailjetClient(System.getenv("MAIL_API_KEY"), System.getenv("MAIL_API_SECRET"), new ClientOptions("v3.1"));
         request = new MailjetRequest(Emailv31.resource)
                 .property(Emailv31.MESSAGES, new JSONArray()
                         .put(new JSONObject()
