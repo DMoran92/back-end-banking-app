@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-    <!-- <script src="../scripts/script.js"></script>
+    <link rel="stylesheet" type="text/css" media="all"
+          href="/static/css/welcome.css" th:href="@{/css/welcome.css}" />
 
-    <link rel="stylesheet" th:href="@{/css/main.css}"/> -->
-
-    <title>An amazing Bank Application</title>
+    <title>Portal to Bank of Galway</title>
     <script>
         // function to handle the login
         async function login(event) {
@@ -32,7 +32,7 @@
             });
             // If the response is OK, redirect to the dashboard page
             if (response.ok) {
-                window.location.href = '/dashboard#home';
+                window.location.href = '/dashboard';
             } else {
                 alert('Login failed');
             }
@@ -69,49 +69,46 @@
     </script>
 </head>
 <body>
-<nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-    <a class="navbar-brand" href="#">Project Bank</a>
-    <a class="navbar-brand" href="/debug-list">Current customers debug page</a>
-</nav>
-<main role="main" class="container">
-    <div style="margin-left:auto;margin-right:auto;text-align:center" class="starter-template">
-        <h1>An amazing Bank Application</h1>
-    </div>
-    <!--
-    <ol>
-        <li th:each="task : ${tasks}" th:text="${task}"></li>
-    </ol>
-     -->
-    <div align="center">
-        <h1>Welcome to The Bank of Galway</h1>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button><br><br>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#regModal">Register</button><br>
-    </div>
-    <!-- Button trigger modal -->
-
+<main role="main" class="main">
+    <section id="hero" class="hero section">
+        <img th:src="@{/img/cathedral_jpg.jpg}" alt="Cannot display background image">
+        <div class="content-container">
+            <div class="container">
+                <div class="row justify-content-center align-items-center">
+                    <div class="col-12 col-xl-6">
+                        <div class=" text-center">
+                            <h1>Welcome to The Bank of Galway</h1>
+                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button><br><br>
+                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#regModal">Register</button><br>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
     <!-- Login Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog">
-            <div class="modal-content">
+            <div class="modal-content welcome_modal_body">
                 <div class="modal-header">
-                    <h1 class="modal-title fs-5" id="loginModalLabel">Login</h1>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h1 class="modal-title welcome_modal_header">Login</h1>
+                    <!--button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button-->
                 </div>
-                <div class="modal-body">
-                    <form id="loginForm" onsubmit="login(event)">
-                        <div class="mb-3">
-                            <label for="customerId" class="form-label">Customer ID</label>
-                            <input type="text" class="form-control" id="customerId" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <div class="modal-body welcome_modal_body">
+                    <div id="loginFormContainer" style="margin-left:auto;margin-right:auto;text-align:center">
+                        <form id="loginForm" onsubmit="login(event)">
+                            <div class="mb-3">
+                                <label for="customerId" class="form-label">Customer ID</label>
+                                <input type="text" class="form-control" id="customerId" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button type="submit" class="welcome_button">Submit</button>
+                            <button type="button" class="welcome_button" data-bs-dismiss="modal">Cancel</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -121,79 +118,69 @@
 <!-- Registration Modal -->
 <div class="modal fade" id="regModal" tabindex="-1" aria-labelledby="regModalLabel" aria-hidden="true">
     <div class="modal-dialog">
-        <div class="modal-content">
+        <div class="modal-content welcome_modal_body">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="regModalLabel">Register</h1>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h1 class="modal-title  welcome_modal_header">Enter Your Details to Register</h1>
             </div>
-            <div class="modal-body">
-                <div id="registrationFormContainer">
+            <div   class="modal-body welcome_modal_body">
+                <div id="registrationFormContainer" style="margin-left:auto;margin-right:auto;text-align:center">
                     <form id="registerForm" onsubmit="register(event)">
-                        <label>First name:</label>
-                        <input type="text" name="firstName" required/><br/>
+                        <label><span>First name:</span> <input type="text" name="firstName" size="30" required/></label>
+                        <br/>
+                        <label><span>Last name:</span> <input type="text" name="lastName" size="30" required/></label>
+                        <br/>
+                        <label><span>E-mail: </span> <input type="email" name="email" size="30" required/> </label>
+                        <br/>
+                        <label><span>Password: </span> <input type="password" name="password" size="30" required/> </label>
+                        <br/>
+                        <label><span>Phone Number: </span> <input type="text" name="phoneNumber" size="30" required/> </label>
+                        <br/>
+                        <label><span>Address Line 1: </span> <input type="text" name="addrLine1" size="30" required/> </label>
+                        <br/>
+                        <label><span>Address Line 2: </span> <input type="text" name="addrLine2" size="30" required/> </label>
+                        <br/>
+                        <label><span>Town/City: </span> <input type="text" name="townCity" size="30" required/> </label>
+                        <br/>
+                        <label><span>County/State:</span>
+                            <select name="countyState" required>
+                                <option value="" disabled selected>Select your option</option>
+                                <option value="Carlow">Carlow</option>
+                                <option value="Cavan">Cavan</option>
+                                <option value="Clare">Clare</option>
+                                <option value="Cork">Cork</option>
+                                <option value="Donegal">Donegal</option>
+                                <option value="Dublin">Dublin</option>
+                                <option value="Galway">Galway</option>
+                                <option value="Kerry">Kerry</option>
+                                <option value="Kildare">Kildare</option>
+                                <option value="Kilkenny">Kilkenny</option>
+                                <option value="Laois">Laois</option>
+                                <option value="Leitrim">Leitrim</option>
+                                <option value="Limerick">Limerick</option>
+                                <option value="Longford">Longford</option>
+                                <option value="Louth">Louth</option>
+                                <option value="Mayo">Mayo</option>
+                                <option value="Meath">Meath</option>
+                                <option value="Monaghan">Monaghan</option>
+                                <option value="Offaly">Offaly</option>
+                                <option value="Roscommon">Roscommon</option>
+                                <option value="Sligo">Sligo</option>
+                                <option value="Tipperary">Tipperary</option>
+                                <option value="Waterford">Waterford</option>
+                                <option value="Westmeath">Westmeath</option>
+                                <option value="Wexford">Wexford</option>
+                                <option value="Wicklow">Wicklow</option>
+                            </select></label>
+                        <br/>
+                        <label><span>id Type:</span> <input type="text" name="idType" size="30" required/> </label>
+                        <br/>
+                        <label><span>ID Number:</span> <input type="text" name="idNumber" size="30" required/> </label>
+                        <br/>
+                        <label><span>DOB:</span> <input type="date" name="dob" required/> </label>
+                        <br/>
 
-                        <label>Last name:</label>
-                        <input type="text" name="lastName" required/><br/>
-
-                        <label>E-mail:</label>
-                        <input type="email" name="email" required/><br/>
-
-                        <label>Password:</label>
-                        <input type="password" name="password" required/><br/>
-
-                        <label>Phone Number:</label>
-                        <input type="text" name="phoneNumber" required/><br/>
-
-                        <label>Address Line 1</label>
-                        <input type="text" name="addrLine1" required/><br/>
-
-                        <label>Address Line 2</label>
-                        <input type="text" name="addrLine2"/><br/>
-
-                        <label>Town/City</label>
-                        <input type="text" name="townCity" required/><br/>
-
-                        <label>County/State:</label>
-                        <select name="countyState" required>
-                            <option value="" disabled selected>Select your option</option>
-                            <option value="Carlow">Carlow</option>
-                            <option value="Cavan">Cavan</option>
-                            <option value="Clare">Clare</option>
-                            <option value="Cork">Cork</option>
-                            <option value="Donegal">Donegal</option>
-                            <option value="Dublin">Dublin</option>
-                            <option value="Galway">Galway</option>
-                            <option value="Kerry">Kerry</option>
-                            <option value="Kildare">Kildare</option>
-                            <option value="Kilkenny">Kilkenny</option>
-                            <option value="Laois">Laois</option>
-                            <option value="Leitrim">Leitrim</option>
-                            <option value="Limerick">Limerick</option>
-                            <option value="Longford">Longford</option>
-                            <option value="Louth">Louth</option>
-                            <option value="Mayo">Mayo</option>
-                            <option value="Meath">Meath</option>
-                            <option value="Monaghan">Monaghan</option>
-                            <option value="Offaly">Offaly</option>
-                            <option value="Roscommon">Roscommon</option>
-                            <option value="Sligo">Sligo</option>
-                            <option value="Tipperary">Tipperary</option>
-                            <option value="Waterford">Waterford</option>
-                            <option value="Westmeath">Westmeath</option>
-                            <option value="Wexford">Wexford</option>
-                            <option value="Wicklow">Wicklow</option>
-                        </select><br/>
-
-                        <label>id Type</label>
-                        <input type="text" name="idType" required/><br/>
-
-                        <label>ID Number</label>
-                        <input type="text" name="idNumber" required/><br/>
-
-                        <label>DOB</label>
-                        <input type="date" name="dob" required/><br/>
-
-                        <button type="submit">Register</button>
+                        <button type="submit" class="welcome_button">Register</button>
+                        <button type="button" class="welcome_button" data-bs-dismiss="modal">Close</button>
                     </form>
                 </div>
                 <!-- display the username back to the user after successful registration  -->
@@ -202,16 +189,8 @@
                     <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
         </div>
     </div>
 </div>
-</main>
-<!-- /.container -->
-<!-- Load jQuery first -->
-<script src="/webjars/jquery/3.3.1/jquery.min.js"></script>
-<script type="text/javascript" th:src="@{webjars/bootstrap/4.2.1/js/bootstrap.min.js}"></script>
 </body>
 </html>
