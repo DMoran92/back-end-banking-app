@@ -66,7 +66,7 @@ function populateDashboard(data) {
         /* generate HTML for accounts table rows */
         var accountsHtml = data.customer.accounts.map(account => `
             <tr><td>${account.accountId}</td>
-                <td>${account.accountType}</td>
+                <td>${account.accountType} (${account.currency})</td>
                 <td>${parseFloat(account.balance).toFixed(2)}</td>
             </tr>
         `).join('');
