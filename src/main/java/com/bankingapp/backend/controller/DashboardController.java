@@ -42,7 +42,7 @@ public class DashboardController {
     private NewAccountServiceImpl newAccountServiceImpl;
 
     @GetMapping("/")
-    public ResponseEntity<Map<String, Object>> getCustomerDashboard() throws MailjetSocketTimeoutException, MailjetException {
+    public ResponseEntity<Map<String, Object>> getCustomerDashboard() {
         logger.info("Entering getCustomerDashboard");
 
         /* get the authenticated user's username */
