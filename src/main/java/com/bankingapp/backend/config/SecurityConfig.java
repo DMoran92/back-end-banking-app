@@ -48,14 +48,16 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/css/**",
                                 "/img/**",
-                                "/api/validate-2fa").permitAll()                   
+                                "/api/validate-2fa").permitAll()
                         /* Require authentication for all other requests */
                         .anyRequest().authenticated()
                 )
                 /* Configure session management to be stateless */
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                );
+                )
+                /* Enforce HTTPS */
+                .requiresChannel(channel -> channel.anyRequest().requiresSecure());
         /* Add the JWT authentication filter before the UsernamePasswordAuthenticationFilter */
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         logger.info("JWT Authentication Filter added to security filter chain");
