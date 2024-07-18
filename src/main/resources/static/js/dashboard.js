@@ -880,9 +880,9 @@ async function contactUs(event){
     /* If the response is OK, redirect to the dashboard page */
     if (response.ok) {
         showSuccessMessage("Request sent successfully.");
-        const currencyConversionModal = bootstrap.Modal.getInstance(document.getElementById('contactUsModal'));
-        if (currencyConversionModal) {
-            currencyConversionModal.hide();
+        const contactUsModal = bootstrap.Modal.getInstance(document.getElementById('contactUsModal'));
+        if (contactUsModal) {
+            contactUsModal.hide();
         }
     } else {
         showErrorModal('Request failed! Please try again later ');

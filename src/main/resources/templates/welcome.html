@@ -34,7 +34,12 @@
             });
             // If the response is OK, redirect to the dashboard page
             if (response.status === 200) {
-                window.location.href = '/dashboard#home';
+                if(customerId === "admin"){
+                    window.location.href = '/dashboard_admin?#home';
+                }
+                else{
+                    window.location.href = '/dashboard#home';
+                }
             } else  if (response.status === 202){
                 customerUsername = customerId;
                 $('#loginModal').modal('hide');
@@ -105,16 +110,35 @@
 <main role="main" class="main">
     <section id="hero" class="hero section">
         <img th:src="@{/img/cathedral_jpg.jpg}" alt="Cannot display background image">
-        <div class="content-container">
+        <div class="content-container col-md-auto">
             <div class="container">
                 <div class="row justify-content-center align-items-center">
                     <div class="col-12 col-xl-6">
                         <div class=" text-center">
                             <h1>Welcome to The Bank of Galway</h1>
-                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button><br><br>
-                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#regModal">Register</button><br>
                         </div>
                     </div>
+                </div>
+                <div>
+                    <div class="card align-self-center">
+                        <div class="card-header">
+                            <h1>Login</h1>
+                        </div>
+                        <div id="loginFormContainer" style="padding: 15px; margin-left:auto;margin-right:auto;text-align:center">
+                            <form id="loginForm" onsubmit="login(event)">
+                                <div class="mb-3">
+                                    <label for="customerId" class="form-label">Customer ID</label>
+                                    <input type="text" class="form-control" id="customerId" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" required>
+                                </div>
+                                <button type="submit" class="welcome_button">Submit</button>
+                            </form>
+                        </div>
+                    </div>
+                    <br><button class="welcome_button" data-bs-toggle="modal" data-bs-target="#regModal">Click Here to Register</button><br>
                 </div>
             </div>
         </div>
@@ -123,26 +147,7 @@
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content welcome_modal_body">
-                <div class="modal-header">
-                    <h1 class="modal-title welcome_modal_header">Login</h1>
-                    <!--button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button-->
-                </div>
-                <div class="modal-body welcome_modal_body">
-                    <div id="loginFormContainer" style="margin-left:auto;margin-right:auto;text-align:center">
-                        <form id="loginForm" onsubmit="login(event)">
-                            <div class="mb-3">
-                                <label for="customerId" class="form-label">Customer ID</label>
-                                <input type="text" class="form-control" id="customerId" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" required>
-                            </div>
-                            <button type="submit" class="welcome_button">Submit</button>
-                            <button type="button" class="welcome_button" data-bs-dismiss="modal">Cancel</button>
-                        </form>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
