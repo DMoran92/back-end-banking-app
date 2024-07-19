@@ -32,6 +32,9 @@
                         <li><a class="dropdown-item" href="#" onclick="logout()">Logout</a></li>
                     </ul>
                 </div>
+                <span class="navbar-text me-3">    </span>
+                <a style = "font-size:16px; color:darkorange" href="#" onclick="showHelpModal('Help')"></i>Help</a>
+                <a href="#"> <img src="orange_help_icon_transparent.png" alt="Help Icon" width="33" height="33" onclick="showHelpModal('Help')"> </a>
             </div>
         </div>
     </div>
@@ -539,6 +542,24 @@
             </div>
             <div class="modal-body" id="errorModalBody">
                 <!-- Error message will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Help Modal -->
+<div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="helpModalLabel">Your Banking Assistant...</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="background-color:lightblue" id="helpModalBody">
+                    <!-- Modal content will be populated here -->
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
