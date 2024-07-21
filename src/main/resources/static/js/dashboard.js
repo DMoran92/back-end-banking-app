@@ -360,6 +360,60 @@ function showErrorModal(message) {
 
     errorModal.show();
 }
+
+/* pop an Help modal if requested*/
+function showHelpModal(message) {
+    const helpModal = new bootstrap.Modal(document.getElementById('helpModal'), {});
+
+    const helpModalBody = document.getElementById('helpModalBody');
+    const documentTitle = document.title;
+    //const tabTitle = $("a.active").attr("href").slice(-1);
+
+    const tabTitle = $(".tab-pane.active").attr("id");
+    var imageName = '';
+    var innerHTMLString = '';
+
+    switch(tabTitle) {
+        case 'transaction-enquiry':
+            imageName = 'transaction_enquiry_help'
+            break;
+        case 'deposit-withdraw':
+            imageName = 'deposit_withdraw_help'
+            break;
+        case 'transfer-funds':
+            imageName = 'transfer_funds_help'
+            break;
+        case 'currency-exchange':
+            imageName = 'currency_exchange_help'
+            break;
+        case 'pay-bill':
+            imageName = 'pay_a_bill_help'
+            break;
+        case 'create-account':
+            imageName = 'create_new_account_help'
+            break;
+        case 'savings-accounts':
+            imageName = 'savings_accounts_help'
+            break;
+        case 'order-card':
+            imageName = 'manage_cards_help'
+            break;
+        case 'manage-payees':
+            imageName = 'manage_payees_help'
+            break;
+        default:
+            imageName = 'home_help'
+            break;
+    }
+
+    innerHTMLString = `<div> <img src="/img/` + imageName + `.PNG" alt="Cannot display background image" style="width: 100%"> </div>`;
+
+    helpModalBody.innerHTML=innerHTMLString;
+
+    helpModal.show();
+}
+
+
 /* pop success modal */
 function showSuccessMessage(message) {
     const successModal = new bootstrap.Modal(document.getElementById('successModal'), {});
