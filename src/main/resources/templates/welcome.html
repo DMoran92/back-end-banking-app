@@ -34,15 +34,15 @@
             });
             // If the response is OK, redirect to the dashboard page
             if (response.status === 200) {
-                if(customerId === "admin"){
-                    window.location.href = '/dashboard_admin?#home';
+                const role = await response.text();
+                if (role === 'ROLE_ADMIN') {
+                    window.location.href = '/dashboard_admin#home';
                 }
                 else{
                     window.location.href = '/dashboard#home';
                 }
             } else  if (response.status === 202){
                 customerUsername = customerId;
-                $('#loginModal').modal('hide');
                 $('#twoFaModal').modal('show');
             } else {
                 alert('Login failed')

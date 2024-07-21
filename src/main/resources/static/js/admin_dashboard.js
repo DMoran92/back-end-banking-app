@@ -5,6 +5,7 @@ let accountList = []
 let transactionsList = []
 
 function getCustomer(){
+    event.preventDefault();
     /* get customer name by input */
     customerLastNameInput = document.getElementById("searchCustomerName").value;
     let custSearch = customerList.find(c => c.lastName.toUpperCase() === customerLastNameInput.toUpperCase()) //remove case sensitivity

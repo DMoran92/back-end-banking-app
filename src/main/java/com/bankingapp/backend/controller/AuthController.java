@@ -4,6 +4,7 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.TwoFactorAuth;
 import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.repository.TwoFactorAuthRepository;
+import org.springframework.security.core.GrantedAuthority;
 import com.bankingapp.backend.security.JwtUtil;
 import com.bankingapp.backend.service.MailService;
 import jakarta.servlet.http.Cookie;
@@ -26,7 +27,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.sql.Timestamp;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.bankingapp.backend.utilities.Utils.generate2FACode;
 
@@ -55,8 +59,7 @@ public class AuthController {
         logger.info("Authenticating user: {}", authRequest.getUsername());
 
         /* Perform authentication */
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
+        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(authRequest.getUsername(), authRequest.getPassword()));
         /* Include authentication in the security context
            This will be useful when/if we introduce roles
            other parts of the code can get current user authentication with
@@ -109,13 +112,17 @@ public class AuthController {
         /* Set JWT token in a Http only cookie */
         Cookie cookie = new Cookie("jwt", token);
         cookie.setHttpOnly(true); // Prevents JavaScript access to the cookie (for security)
-        cookie.setSecure(false); // Set to true in production for HTTPS
+        cookie.setSecure(true); // Set to true in production for HTTPS
         cookie.setPath("/"); // cookie is accessible throughout entire application
-        cookie.setMaxAge(900); // 15 min
+        cookie.setMaxAge(3600); // 60 min
         response.addCookie(cookie);
         logger.info("Set JWT token in HttpOnly cookie");
+        /* get the user role stored in authorities */
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        GrantedAuthority authority = userDetails.getAuthorities().iterator().next();
 
-        return ResponseEntity.ok("Authenticated");
+        logger.info("User role: {}", authority.toString());
+        return ResponseEntity.ok(authority.toString());
     }
 
     @PostMapping("/logout")

@@ -15,9 +15,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 
-    <script th:inline="javascript">
-        let customerList = [[${customers}]]
-    </script>
     <style>
         .pagination {
             display: flex;
@@ -51,9 +48,6 @@
                 <div id="sidebar-nav" class="layout-menu list-group border-0 rounded-0 text-sm-start min-vh-100">
                     <a href="#home" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab" id="home-link">
                         <i class="bi bi-house"></i> <span>Home</span>
-                    </a>
-                    <a href="#transaction-enquiry" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab">
-                        <i class="bi bi-question-diamond"></i> <span>Transactions</span>
                     </a>
                 </div>
             </div>
@@ -240,4 +234,7 @@
     });
 </script>
 <script src="/js/admin_dashboard.js"></script>
+<script th:inline="javascript">
+    let customerList = [[${customers}]]
+</script>
 </html>
