@@ -85,7 +85,7 @@ public class DashboardController {
                 newAccountServiceImpl.makeIban(account);
             }
             else{
-                System.out.println("THIS IS YOUR IBAN: "+account.getIban());
+                logger.info("User IBAN: {}", account.getIban());
             }
         }
 

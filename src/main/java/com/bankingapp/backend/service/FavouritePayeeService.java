@@ -5,6 +5,7 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.FavouritePayee;
 import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.repository.FavouritePayeeRepository;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,11 +39,11 @@ public class FavouritePayeeService {
     public List<FavouritePayee> getFavouritePayees(int customerId) {
         return favouritePayeeRepository.findByCustomer_CustomerId(customerId);
     }
-
+    @Transactional
     public FavouritePayee addFavouritePayee(FavouritePayee favouritePayee) {
         return favouritePayeeRepository.save(favouritePayee);
     }
-
+    @Transactional
     public void removeFavouritePayee(Long payeeId) {
         favouritePayeeRepository.deleteById(payeeId);
     }

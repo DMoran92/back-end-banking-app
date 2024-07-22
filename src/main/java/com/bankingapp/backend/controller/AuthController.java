@@ -4,6 +4,7 @@ import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.TwoFactorAuth;
 import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.repository.TwoFactorAuthRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.GrantedAuthority;
 import com.bankingapp.backend.security.JwtUtil;
 import com.bankingapp.backend.service.MailService;
@@ -55,6 +56,7 @@ public class AuthController {
 
     /* Endpoint to authenticate the user and generate a JWT token */
     @PostMapping("/authenticate")
+    @Transactional
     public ResponseEntity<String> authenticate(@RequestBody AuthRequest authRequest,HttpServletRequest request, HttpServletResponse response) {
         logger.info("Authenticating user: {}", authRequest.getUsername());
 

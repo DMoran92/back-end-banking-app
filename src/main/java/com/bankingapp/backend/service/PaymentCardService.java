@@ -3,6 +3,7 @@ package com.bankingapp.backend.service;
 import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.PaymentCard;
 import com.bankingapp.backend.repository.PaymentCardRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,7 +22,7 @@ public class PaymentCardService {
     // Date formatter for MM/YYYY format
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
 
-    // trying out just setting entire customer. Wouldn't that be better??
+    @Transactional
     public PaymentCard orderPaymentCard(Customer customer) {
 
         // Generate card number
@@ -38,11 +39,10 @@ public class PaymentCardService {
 
         paymentCard.setExpiryDate(formattedExpiryDate);
         paymentCard.setCustomer(customer);
-        paymentCard.setCustomer(customer);
         paymentCard.setStatus("Active");
         return paymentCardRepository.save(paymentCard);
     }
-
+    @Transactional
     public PaymentCard freezeCard(Long cardId) {
         PaymentCard card = paymentCardRepository.findById(cardId).orElseThrow(() -> new RuntimeException("Card not found"));
         if ("Stolen".equals(card.getStatus())) {
@@ -51,7 +51,7 @@ public class PaymentCardService {
         card.setStatus("Frozen");
         return paymentCardRepository.save(card);
     }
-
+    @Transactional
     public PaymentCard unfreezeCard(Long cardId) {
         PaymentCard card = paymentCardRepository.findById(cardId).orElseThrow(() -> new RuntimeException("Card not found"));
         if ("Stolen".equals(card.getStatus())) {
@@ -60,13 +60,13 @@ public class PaymentCardService {
         card.setStatus("Active");
         return paymentCardRepository.save(card);
     }
-
+    @Transactional
     public PaymentCard reportStolen(Long cardId) {
         PaymentCard card = paymentCardRepository.findById(cardId).orElseThrow(() -> new RuntimeException("Card not found"));
         card.setStatus("Stolen");
         return paymentCardRepository.save(card);
     }
-
+    @Transactional
     public List<PaymentCard> getCardsByCustomerId(int customerId) {
         return paymentCardRepository.findByCustomer_CustomerId(customerId);
     }

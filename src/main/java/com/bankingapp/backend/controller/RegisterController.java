@@ -6,6 +6,7 @@ import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.service.FavouritePayeeService;
 import com.bankingapp.backend.service.NewAccountService;
 import com.bankingapp.backend.service.NewUserService;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +38,7 @@ public class RegisterController {
     private NewAccountService newacc;
 
     @PostMapping("/register")
+    @Transactional
     public ResponseEntity<Map<String, String>> addCustomer(@RequestBody Customer customer) {
 
         // Check if the ID Number already exists in the database

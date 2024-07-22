@@ -10,6 +10,7 @@ import com.bankingapp.backend.repository.PaymentCardRepository;
 import com.bankingapp.backend.service.PaymentCardService;
 import com.bankingapp.backend.service.TransactionService;
 import com.bankingapp.backend.utilities.Utils;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ public class PaymentCardController {
     }
 
     @PostMapping("/order")
+    @Transactional
     public ResponseEntity<String> orderNewCard() {
 
         String username = getAuthenticatedUsername();
@@ -117,6 +119,7 @@ public class PaymentCardController {
     }
 
     @PostMapping("/transaction")
+    @Transactional
     public ResponseEntity<String> makeCardTransaction(@RequestBody Map<String, String> payload) {
 
         long cardId = Long.parseLong(payload.get("cardId"));
