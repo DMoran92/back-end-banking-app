@@ -34,10 +34,15 @@
             });
             // If the response is OK, redirect to the dashboard page
             if (response.status === 200) {
-                window.location.href = '/dashboard#home';
+                const role = await response.text();
+                if (role === 'ROLE_ADMIN') {
+                    window.location.href = '/dashboard_admin#home';
+                }
+                else{
+                    window.location.href = '/dashboard#home';
+                }
             } else  if (response.status === 202){
                 customerUsername = customerId;
-                $('#loginModal').modal('hide');
                 $('#twoFaModal').modal('show');
             } else {
                 alert('Login failed')
@@ -105,47 +110,37 @@
 <main role="main" class="main">
     <section id="hero" class="hero section">
         <img th:src="@{/img/cathedral_jpg.jpg}" alt="Cannot display background image">
-        <div class="content-container">
+        <div class="content-container col-md-auto">
             <div class="container">
                 <div class="row justify-content-center align-items-center">
                     <div class="col-12 col-xl-6">
                         <div class=" text-center">
                             <h1>Welcome to The Bank of Galway</h1>
-                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button><br><br>
-                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#regModal">Register</button><br>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <div class="card align-self-center">
+                        <div id="loginFormContainer" style="padding: 2px; margin-left:auto;margin-right:auto;text-align:center">
+                            <form id="loginForm" onsubmit="login(event)">
+                                <div class="mb-3">
+                                    <label for="customerId" class="form-label">Username</label>
+                                    <input type="text" class="form-control" id="customerId" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">Password</label>
+                                    <input type="password" class="form-control" id="password" required>
+                                </div>
+                                <button type="submit" class="welcome_button">Login</button>
+                            </form>
+                            <br>
+                            <button class="welcome_button" data-bs-toggle="modal" data-bs-target="#regModal">Register</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    <!-- Login Modal -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content welcome_modal_body">
-                <div class="modal-header">
-                    <h1 class="modal-title welcome_modal_header">Login</h1>
-                    <!--button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button-->
-                </div>
-                <div class="modal-body welcome_modal_body">
-                    <div id="loginFormContainer" style="margin-left:auto;margin-right:auto;text-align:center">
-                        <form id="loginForm" onsubmit="login(event)">
-                            <div class="mb-3">
-                                <label for="customerId" class="form-label">Customer ID</label>
-                                <input type="text" class="form-control" id="customerId" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Password</label>
-                                <input type="password" class="form-control" id="password" required>
-                            </div>
-                            <button type="submit" class="welcome_button">Submit</button>
-                            <button type="button" class="welcome_button" data-bs-dismiss="modal">Cancel</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </main>
 
 <!-- Registration Modal -->
@@ -219,7 +214,7 @@
                 <!-- display the username back to the user after successful registration  -->
                 <div id="registrationResultContainer" style="display: none;">
                     <p id="registrationResult"></p>
-                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="welcome_button" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>

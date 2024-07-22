@@ -192,16 +192,16 @@ label select {
 }
 
 .welcome_button {
-    padding: 15px 25px;
-    font-size: 20px;
+    padding: 15px 45px;
+    font-size: 12px;
+    font-weight: bold;
     text-align: center;
     cursor: pointer;
     outline: none;
-    color: #fff;
-    background-color: #001a09;
+    color: black;
+    background-color: #33b249;
     border: none;
     border-radius: 15px;
-    box-shadow: 0 5px #fff;
 }
 
 .welcome_button:hover {
@@ -216,13 +216,23 @@ label select {
 
 .welcome_modal_body {
     font-weight: 900;
-    background-color: lightgreen;
+    background-color: ghostwhite;
 }
 
 .welcome_modal_header {
     font-weight: 900;
-    background-color: lightgreen;
+    background-color: ghostwhite;
     text-align: center;
     font-size: 25px;
     margin: 0 auto;
 }
+
+.card {
+    border: 2px solid #4CAF50;
+    border-radius: 10px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin: 20px;
+    background-color: #fff;
+}
+

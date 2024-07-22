@@ -1,0 +1,240 @@
+<!DOCTYPE HTML>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Dashboard</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{webjars/bootstrap/5.2.3/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/main.css}"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@^4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+
+    <style>
+        .pagination {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .card-body .d-flex {
+            overflow-x: auto;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg banner fixed-top flex-md-nowrap p-0">
+    <div class="container-fluid banner">
+        <a class="navbar-brand banner align-middle"><i class="bi bi-bank icon-45"></i> Bank of Galway</a>
+    </div>
+</nav>
+
+<div class="container-fluid">
+    <div class="row flex-nowrap">
+        <div class="col-auto px-0" style="height: 100%">
+            <div id="sidebar" class="collapse collapse-horizontal show border-end">
+                <div id="sidebar-nav" class="layout-menu list-group border-0 rounded-0 text-sm-start min-vh-100">
+                    <a href="#home" class="menu-link list-group-item border-end-0 d-inline-block text-truncate" data-bs-toggle="tab" id="home-link">
+                        <i class="bi bi-house"></i> <span>Home</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <main class="col main-content ps-md-2 pt-2 mt-5">
+            <div class="tab-content mt-4">
+                <div class="tab-pane fade show active" id="home" role="tabpanel" aria-labelledby="home-tab" >
+                    <h3>Administrator Page</h3>
+                    <form onsubmit="getCustomer()">
+                        <h6>Search for Customer by Last Name</h6>
+                        <input id="searchCustomerName" type="text"> <input type="submit" value="Search"><br>
+                    </form>
+                    <!-- Customer Accounts and Recent Transactions -->
+                    <div class="row mb-4">
+                        <div class="col-12 col-md-6 mb-4 mb-lg-0">
+                            <div id="customerCard" class="card" style="display: none">
+                                <h5 class="card-header">Customers</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table" id="customerTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Customer Id</th>
+                                                    <th>Name</th>
+                                                    <th>Username</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="customer-details">
+                                                <tr>
+                                                    <td id="customerId"></td>
+                                                    <td id="customerName"></td>
+                                                    <td id="customerUsername"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6 mb-4 mb-lg-0">
+                            <div id="accountsCard" class="card" style="display: none">
+                                <h5 class="card-header">Customer Accounts</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive table-striped">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>IBAN</th>
+                                                <th>Account Type</th>
+                                                <th>Balance</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="account-details">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-12 col-md-12 mb-4 mb-lg-0">
+                            <div id="transactionsCard" class="card" style="display: none">
+                                <h5 class="card-header">Transactions</h5>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Amount</th>
+                                                <th>Category</th>
+                                                <th>Date</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody id="transaction-details">
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="d-flex justify-content-center mt-4">
+                                        <nav>
+                                            <ul class="pagination" id="transactionPagination">
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- User Profile Modal -->
+<div class="modal fade" id="userProfileModal" tabindex="-1" aria-labelledby="userProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userProfileModalLabel">User Profile</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="profile-header">
+                    <img src="blank-profile-pic.png" alt="User Profile" class="rounded-circle profile-avatar" width="80" height="80">
+                    <h3 id="profileName"></h3>
+                    <p id="profileEmail" class="text-muted"></p>
+                </div>
+                <div class="profile-details">
+                    <p><strong>Phone:</strong> <span id="profilePhone"></span></p>
+                    <p><strong>Address:</strong> <span id="profileAddress"></span></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="successModalLabel">Success</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="successModalBody">
+                <!-- Success message will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="errorModalLabel">Error</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="errorModalBody">
+                <!-- Error message will be populated here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+<script>
+
+    let customerNumber = 0
+    let accountCustomerNumber = 0
+
+    //click record on customer table to get their accounts
+    $("#customer-details").on('click', 'tr', function(){
+        $(this).addClass('selected').siblings().removeClass('selected');
+        let customerNum=$(this).find('td:first').html();
+
+        customerNumber = Number(customerNum)
+        getAccounts(customerNumber);
+        document.getElementById('accountsCard').style.display = 'block';
+    });
+
+    //click record on account table to get their transactions
+    $("#account-details").on('click', 'tr', function(){
+        $(this).addClass('selected').siblings().removeClass('selected');
+        let accountIban=$(this).find('td:first').html();
+        let accountCustomerNum=$(this).find('td:last').html();
+
+        accountCustomerNumber = Number(accountCustomerNum)
+        getTransactions(accountIban, accountCustomerNumber)
+        document.getElementById('transactionsCard').style.display = 'block';
+    });
+</script>
+<script src="/js/admin_dashboard.js"></script>
+<script th:inline="javascript">
+    let customerList = [[${customers}]]
+</script>
+</html>

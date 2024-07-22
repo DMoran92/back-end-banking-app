@@ -49,6 +49,8 @@ public class SecurityConfig {
                                 "/css/**",
                                 "/img/**",
                                 "/api/validate-2fa").permitAll()
+                        /* limit admin page to only admins */
+                        .requestMatchers("/dashboard_admin/**").hasRole("ADMIN")
                         /* Require authentication for all other requests */
                         .anyRequest().authenticated()
                 )
