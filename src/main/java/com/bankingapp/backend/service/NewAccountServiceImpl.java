@@ -42,7 +42,6 @@ public class NewAccountServiceImpl  implements NewAccountService {
 
         for (int i = 0; i <lastCustomer.size(); i++){
             index++;
-            System.out.println(index);
         }
 
         return lastCustomer.get(index).getCustomerId();

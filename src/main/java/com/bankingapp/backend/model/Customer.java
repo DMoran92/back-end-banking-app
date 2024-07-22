@@ -16,7 +16,7 @@ public class Customer {
     @Column(name = "Email")
     private String email;
     @Column(name = "Phone")
-    private int phoneNumber;
+    private String phoneNumber;
     @Column(name = "countryId")
     private int countryId;
     @Column(name = "AddrLine1")
@@ -53,7 +53,7 @@ public class Customer {
     // Constructors
     public Customer() {}
 
-    public Customer(String firstName, String lastName, String email, int phone, int countryId, String addrLine1, String addrLine2, String townCity, String countryState, String password, String idType, String idNumber, String dob) {
+    public Customer(String firstName, String lastName, String email, String phone, int countryId, String addrLine1, String addrLine2, String townCity, String countryState, String password, String idType, String idNumber, String dob) {
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
@@ -94,11 +94,9 @@ public class Customer {
         this.email = email;
     }
 
-    public int getPhoneNumber() {
-        return phoneNumber;
-    }
+    public String getPhoneNumber() { return phoneNumber; }
 
-    public void setPhoneNumber(int phone) {
+    public void setPhoneNumber(String phone) {
         this.phoneNumber = phone;
     }
 
