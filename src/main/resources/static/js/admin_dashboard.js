@@ -12,6 +12,8 @@ function getCustomer(){
 
     if(custSearch == null){
         document.getElementById('customerCard').style.display = 'none';
+        document.getElementById('accountsCard').style.display = 'none';
+        document.getElementById('transactionsCard').style.display = 'none';
         window.alert("No Customer Found")
     } else{
         /* control visibility of cards */
