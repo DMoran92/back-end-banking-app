@@ -48,7 +48,9 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/css/**",
                                 "/img/**",
-                                "/api/validate-2fa").permitAll()
+                                "/api/validate-2fa",
+                                "/api/recover-password",
+                                "/api/reset-password/**").permitAll()
                         /* limit admin page to only admins */
                         .requestMatchers("/dashboard_admin/**").hasRole("ADMIN")
                         /* Require authentication for all other requests */
