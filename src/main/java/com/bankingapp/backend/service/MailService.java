@@ -59,4 +59,32 @@ public class MailService {
         System.out.println(response.getStatus());
         System.out.println(response.getData());
     }
+    /* function responsible for sending password reset email to the user */
+    public void sendPasswordResetMail(String resetToken, String email) throws MailjetException, MailjetSocketTimeoutException {
+        MailjetClient client;
+        MailjetRequest request;
+        MailjetResponse response;
+        client = new MailjetClient(System.getenv("MAIL_API_KEY"), System.getenv("MAIL_API_SECRET"), new ClientOptions("v3.1"));
+
+        /* construct the reset URL */
+        String resetUrl = "https://bogproject.online:8443/api/reset-password?token=" + resetToken;
+        request = new MailjetRequest(Emailv31.resource)
+                .property(Emailv31.MESSAGES, new JSONArray()
+                        .put(new JSONObject()
+                                .put(Emailv31.Message.FROM, new JSONObject()
+                                        .put("Email", "bogy.help.sender@hotmail.com")
+                                        .put("Name", "Bank of Galway"))
+                                .put(Emailv31.Message.TO, new JSONArray()
+                                        .put(new JSONObject()
+                                                .put("Email", email)))
+                                .put(Emailv31.Message.SUBJECT, "Password Reset Request")
+                                .put(Emailv31.Message.TEXTPART, "Hello,\n\n" +
+                                        "We received a request to reset your password. Please click the link below to reset your password:\n" +
+                                        resetUrl + "\n\n" +
+                                        "If you did not request a password reset, please ignore this email.\n\n" +
+                                        "Thank you,\nBank of Galway")));
+        response = client.post(request);
+        System.out.println(response.getStatus());
+        System.out.println(response.getData());
+    }
 }

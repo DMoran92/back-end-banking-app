@@ -575,10 +575,62 @@ async function reportStolen(cardId) {
         await fetchWithToken(`/api/cards/report-stolen?id=${cardId}`, {
             method: 'PUT'
         });
-        alert('Card reported stolen successfully');
+        showSuccessMessage('Card reported stolen successfully');
         loadCards();
     } catch (error) {
         showErrorModal('Failed to report stolen. Please try again later.');
+    }
+}
+
+/* used for demo of cards, makes call again for cards to have up-to-date status of them */
+async function populateCardSelector() {
+    try {
+        const cards = await fetchWithToken('/api/cards', {
+            method: 'GET'
+        });
+
+        const selectCard = document.getElementById('selectCard');
+        selectCard.innerHTML = '';
+        cards.forEach(card => {
+            const option = document.createElement('option');
+            option.value = card.cardId;
+            option.text = `${card.cardNumber} - ${card.status}`;
+            selectCard.appendChild(option);
+        });
+    } catch (error) {
+        showErrorModal('Error fetching cards');
+    }
+}
+/* load cards on button press */
+document.getElementById('cardTransactionModal').addEventListener('show.bs.modal', populateCardSelector);
+
+/* used to make a transaction using card. FOR DEMO PURPOSES */
+async function makeCardTransaction(event) {
+    event.preventDefault();
+    const cardId = document.getElementById('selectCard').value;
+    const transactionType = document.getElementById('cardTransactionType').value;
+    const amount = document.getElementById('cardTransactionAmount').value;
+    const cardTransactionModal = bootstrap.Modal.getInstance(document.getElementById('cardTransactionModal'));
+    cardTransactionModal.hide();
+
+    try {
+        const response = await fetch('/api/cards/transaction', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({cardId: cardId, transactionType: transactionType, amount: amount})
+        });
+
+        if (response.ok) {
+
+            showSuccessMessage('Transaction successful');
+        } else {
+            showErrorModal('Transaction Failed');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showErrorModal('Transaction failed');
     }
 }
 

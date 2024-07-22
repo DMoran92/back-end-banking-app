@@ -13,6 +13,7 @@
     <title>Portal to Bank of Galway</title>
     <script>
         let customerUsername = null;
+        let token = null;
         // function to handle the login
         async function login(event) {
             // prevent default submission behaviour
@@ -104,6 +105,57 @@
                 alert('Registration failed');
             }
         }
+        /* send email to the user that forgot password */
+        async function sendPasswordResetLink(event) {
+            event.preventDefault();
+            const email = document.getElementById('resetEmail').value;
+
+            const response = await fetch('/api/recover-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ email: email })
+            });
+
+            if (response.ok) {
+                alert('Password reset link sent to your email.');
+                $('#forgotPasswordModal').modal('hide');
+            } else {
+                alert('Failed to send password reset link.');
+            }
+        }
+
+        /* handle the reset password */
+        async function resetPassword(event) {
+            event.preventDefault();
+            const newPassword = document.getElementById('newPassword').value;
+
+            const response = await fetch('/api/reset-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ token: token, newPassword: newPassword })
+            });
+
+            if (response.ok) {
+                alert('Password successfully reset');
+                $('#resetPasswordModal').modal('hide');
+            } else {
+                alert('Failed to reset password');
+            }
+        }
+
+        /* initial check while loading welcome page for token. if it exists show reset password modal immediately */
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const tk = urlParams.get('token');
+            if (tk) {
+                token = tk;
+                $('#resetPasswordModal').modal('show');
+            }
+        });
     </script>
 </head>
 <body>
@@ -130,6 +182,9 @@
                                 <div class="mb-3">
                                     <label for="password" class="form-label">Password</label>
                                     <input type="password" class="form-control" id="password" required>
+                                    <div class="text-end">
+                                        <a href="#" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal" style="color: grey">Forgot Password?</a>
+                                    </div>
                                 </div>
                                 <button type="submit" class="welcome_button">Login</button>
                             </form>
@@ -234,7 +289,47 @@
                         <label for="twoFaCode">Enter 2FA Code:</label>
                         <input type="text" class="form-control" id="twoFaCode" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Submit</button>
+                    <button type="submit" class="welcome_button">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Forgot Password Modal -->
+<div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-labelledby="forgotPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content welcome_modal_body">
+            <div class="modal-header">
+                <h5 class="modal-title welcome_modal_header">Forgot Password</h5>
+            </div>
+            <div class="modal-body welcome_modal_body">
+                <form id="forgotPasswordForm" onsubmit="sendPasswordResetLink(event)">
+                    <div class="mb-3">
+                        <label for="resetEmail" class="form-label">Enter your email address</label>
+                        <input type="email" class="form-control" id="resetEmail" required>
+                    </div>
+                    <button type="submit" class="welcome_button">Send Reset Link</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="resetPasswordForm" onsubmit="resetPassword(event)">
+                    <div class="form-group mb-3">
+                        <label for="newPassword">Enter new password:</label>
+                        <input type="password" class="form-control" id="newPassword" required>
+                    </div>
+                    <input type="hidden" id="resetToken">
+                    <button type="submit" class="welcome_button">Reset Password</button>
                 </form>
             </div>
         </div>
