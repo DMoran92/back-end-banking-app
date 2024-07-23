@@ -1,5 +1,6 @@
 package com.bankingapp.backend.service;
 
+import com.bankingapp.backend.model.Account;
 import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.model.PaymentCard;
 import com.bankingapp.backend.repository.PaymentCardRepository;
@@ -23,7 +24,7 @@ public class PaymentCardService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
 
     @Transactional
-    public PaymentCard orderPaymentCard(Customer customer) {
+    public PaymentCard orderPaymentCard(Account account) {
 
         // Generate card number
         String cardNumber = generateCardNumber();
@@ -38,7 +39,7 @@ public class PaymentCardService {
         paymentCard.setCardNumber(cardNumber);
 
         paymentCard.setExpiryDate(formattedExpiryDate);
-        paymentCard.setCustomer(customer);
+        paymentCard.setAccount(account);
         paymentCard.setStatus("Active");
         return paymentCardRepository.save(paymentCard);
     }
@@ -67,9 +68,8 @@ public class PaymentCardService {
         return paymentCardRepository.save(card);
     }
     @Transactional
-    public List<PaymentCard> getCardsByCustomerId(int customerId) {
-        return paymentCardRepository.findByCustomer_CustomerId(customerId);
+    public List<PaymentCard> getCardsByAccountId(long accountId) {
+        return paymentCardRepository.findByAccount_AccountId(accountId);
     }
-
 
 }

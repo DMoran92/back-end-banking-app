@@ -11,8 +11,8 @@ public class PaymentCard {
     private Long cardId;
 
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "customer_id", nullable = false)
-    private Customer customer;
+    @JoinColumn(name = "account_id", nullable = false)
+    private Account account;
 
     @Column(name = "card_number", nullable = false)
     private String cardNumber;
@@ -24,11 +24,11 @@ public class PaymentCard {
     // Default constructor
     public PaymentCard() {}
 
-    public PaymentCard(String cardNumber, String expiryDate, String status, Customer customer) {
+    public PaymentCard(String cardNumber, String expiryDate, String status, Account account) {
         this.cardNumber = cardNumber;
         this.expiryDate = expiryDate;
         this.status = status;
-        this.customer = customer;
+        this.account = account;
     }
 
     public Long getCardId() { return cardId; }
@@ -39,12 +39,12 @@ public class PaymentCard {
 
     public void setCardNumber(String cardNumber) { this.cardNumber = cardNumber; }
 
-    public Customer getCustomer() {
-        return customer;
+    public Account getAccount() {
+        return account;
     }
 
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
+    public void setAccount(Account account) {
+        this.account = account;
     }
 
     public String getExpiryDate() { return expiryDate; }
