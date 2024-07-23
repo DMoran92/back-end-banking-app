@@ -30,6 +30,7 @@ public class NewAccountServiceImpl  implements NewAccountService {
 
     //get the transactions for an account
     @Override
+    @Transactional
     public List<Account> getTransactions(long id) {
         Specification<Account> isTransaction = AccountSpecifications.accountTransactions(id);
         return accountRepository.findAll(isTransaction);
@@ -42,13 +43,13 @@ public class NewAccountServiceImpl  implements NewAccountService {
 
         for (int i = 0; i <lastCustomer.size(); i++){
             index++;
-            System.out.println(index);
         }
 
         return lastCustomer.get(index).getCustomerId();
     }
 
     @Override
+    @Transactional
     public Account addNewAccount(Account account) {
         return accountRepository.save(account);
     }

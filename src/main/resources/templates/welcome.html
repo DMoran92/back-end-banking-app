@@ -75,11 +75,28 @@
                 console.error('Error:', error);
             }
         }
+        // Function to check if the user is over 18
+        function isOver18(dob) {
+            const birthDate = new Date(dob);
+            const today = new Date();
+            const age18 = new Date(birthDate.getFullYear() + 18, birthDate.getMonth(), birthDate.getDate());
+            return today >= age18;
+        }
 
         // Function to handle the registration
         async function register(event) {
             // same as above in login
             event.preventDefault();
+
+            // Get the date of birth from the form
+            const dob = document.querySelector('input[name="dob"]').value;
+
+            // Check if the user is over 18
+            if (!isOver18(dob)) {
+                alert('You must be over 18 to register.');
+                return;
+            }
+
             // Get the form data and convert it to a JSON string
             const formData = new FormData(document.getElementById('registerForm'));
             const formObject = Object.fromEntries(formData.entries());
@@ -102,9 +119,11 @@
                 // show the result with the username
                 document.getElementById('registrationResultContainer').style.display = 'block';
             } else {
-                alert('Registration failed');
+                const data = await response.json();
+                alert('Registration failed: ' + data.error);
             }
         }
+
         /* send email to the user that forgot password */
         async function sendPasswordResetLink(event) {
             event.preventDefault();
@@ -164,13 +183,6 @@
         <img th:src="@{/img/cathedral_jpg.jpg}" alt="Cannot display background image">
         <div class="content-container col-md-auto">
             <div class="container">
-                <div class="row justify-content-center align-items-center">
-                    <div class="col-12 col-xl-6">
-                        <div class=" text-center">
-                            <h1>Welcome to The Bank of Galway</h1>
-                        </div>
-                    </div>
-                </div>
                 <div>
                     <div class="card align-self-center">
                         <div id="loginFormContainer" style="padding: 2px; margin-left:auto;margin-right:auto;text-align:center">
@@ -205,18 +217,18 @@
             <div class="modal-header">
                 <h1 class="modal-title  welcome_modal_header">Enter Your Details to Register</h1>
             </div>
-            <div   class="modal-body welcome_modal_body">
+            <div class="modal-body welcome_modal_body">
                 <div id="registrationFormContainer" style="margin-left:auto;margin-right:auto;text-align:center">
                     <form id="registerForm" onsubmit="register(event)">
-                        <label><span>First name:</span> <input type="text" name="firstName" size="30" required/></label>
+                        <label><span>First name:</span> <input type="text" name="firstName" size="30" required pattern="[A-Za-z\s]+" title="First name should contain only letters"/></label>
                         <br/>
-                        <label><span>Last name:</span> <input type="text" name="lastName" size="30" required/></label>
+                        <label><span>Last name:</span> <input type="text" name="lastName" size="30" required pattern="[A-Za-z\s]+" title="Last name should contain only letters"/></label>
                         <br/>
                         <label><span>E-mail: </span> <input type="email" name="email" size="30" required/> </label>
                         <br/>
-                        <label><span>Password: </span> <input type="password" name="password" size="30" required/> </label>
+                        <label><span>Password: </span> <input type="password" name="password" size="30" required minlength="8" title="Password must be at least 8 characters long"/> </label>
                         <br/>
-                        <label><span>Phone Number: </span> <input type="text" name="phoneNumber" size="30" required/> </label>
+                        <label><span>Phone Number: </span> <input type="tel" name="phoneNumber" size="30" required pattern="[0-9]{10}" title="Phone number should be 10 digits"/> </label>
                         <br/>
                         <label><span>Address Line 1: </span> <input type="text" name="addrLine1" size="30" required/> </label>
                         <br/>
@@ -255,13 +267,12 @@
                                 <option value="Wicklow">Wicklow</option>
                             </select></label>
                         <br/>
-                        <label><span>id Type:</span> <input type="text" name="idType" size="30" required/> </label>
+                        <label><span>ID Type:</span> <input type="text" name="idType" size="30" value="Passport" readonly/> </label>
                         <br/>
-                        <label><span>ID Number:</span> <input type="text" name="idNumber" size="30" required/> </label>
+                        <label><span>ID Number:</span> <input type="text" name="idNumber" size="30" required pattern="[A-Za-z0-9]+" title="ID number should contain only letters and numbers"/> </label>
                         <br/>
                         <label><span>DOB:</span> <input type="date" name="dob" required/> </label>
                         <br/>
-
                         <button type="submit" class="welcome_button">Register</button>
                         <button type="button" class="welcome_button" data-bs-dismiss="modal">Close</button>
                     </form>
@@ -336,4 +347,15 @@
     </div>
 </div>
 </body>
+<script>
+    /* this is to clear out the registration modal. When user made one account we hid the registration modal, so if he
+    presses register again he gets the old result. This fixes it so that after user makes an account, he can create new one
+    without issues
+     */
+    document.getElementById('regModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('registerForm').reset();
+        document.getElementById('registrationFormContainer').style.display = 'block';
+        document.getElementById('registrationResultContainer').style.display = 'none';
+    });
+</script>
 </html>

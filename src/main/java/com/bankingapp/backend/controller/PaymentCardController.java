@@ -10,6 +10,7 @@ import com.bankingapp.backend.repository.PaymentCardRepository;
 import com.bankingapp.backend.service.PaymentCardService;
 import com.bankingapp.backend.service.TransactionService;
 import com.bankingapp.backend.utilities.Utils;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -46,15 +48,26 @@ public class PaymentCardController {
     private PaymentCardRepository paymentCardRepository;
 
     @GetMapping
-    public List<PaymentCard> getCardsByCustomerId() {
+    public ResponseEntity<List<PaymentCard>> getCardsByCustomerId() {
         String username = getAuthenticatedUsername();
         Customer customer = customerRepository.findByUsername(username);
 
-        return paymentCardService.getCardsByCustomerId(customer.getCustomerId());
+        if (customer == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        List<PaymentCard> allCards = new ArrayList<>();
+        for (Account account : customer.getAccounts()) {
+            List<PaymentCard> cards = paymentCardService.getCardsByAccountId(account.getAccountId());
+            allCards.addAll(cards);
+        }
+
+        return ResponseEntity.ok(allCards);
     }
 
     @PostMapping("/order")
-    public ResponseEntity<String> orderNewCard() {
+    @Transactional
+    public ResponseEntity<String> orderNewCard(@RequestBody Map<String, Long> payload) {
 
         String username = getAuthenticatedUsername();
         /* retrieve the customer using the username */
@@ -64,14 +77,13 @@ public class PaymentCardController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No username found");
         }
 
-        List<Account> accounts = customer.getAccounts();
-
-        if (accounts.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No accounts found for customer");
+        Long accountId = payload.get("accountId");
+        Account account = accountRepository.findById(accountId).orElse(null);
+        if (account == null || !customer.getAccounts().contains(account)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Account not found or not owned by customer");
         }
 
-        // Deduct service charge from the first account
-        Account account = accounts.get(0);
+        // Deduct service charge from the account
         double serviceChargeAmount = 9.99;
 
         if (account.getBalance() < serviceChargeAmount) {
@@ -95,7 +107,7 @@ public class PaymentCardController {
         transactionService.makeNewTransaction(serviceChargeTransaction);
 
         try {
-            PaymentCard paymentCard = paymentCardService.orderPaymentCard(customer);
+            PaymentCard paymentCard = paymentCardService.orderPaymentCard(account);
             logger.info("Created new payment card for the user");
             return ResponseEntity.ok("Payment card ordered successfully: " + paymentCard.getCardNumber());
         } catch (Exception e) {
@@ -117,6 +129,7 @@ public class PaymentCardController {
     }
 
     @PostMapping("/transaction")
+    @Transactional
     public ResponseEntity<String> makeCardTransaction(@RequestBody Map<String, String> payload) {
 
         long cardId = Long.parseLong(payload.get("cardId"));
@@ -131,6 +144,11 @@ public class PaymentCardController {
             throw new RuntimeException("Card is not available for transactions");
         }
 
+        Account account = card.getAccount();
+        if (account.getBalance() < amount) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Insufficient balance for this transaction");
+        }
+
         String username = getAuthenticatedUsername();
         /* retrieve the customer using the username */
         Customer customer = customerRepository.findByUsername(username);
@@ -140,18 +158,8 @@ public class PaymentCardController {
         }
 
         /* make sure the user has this card assigned */
-        if( customer.getCustomerId() != card.getCustomer().getCustomerId()) {
+        if( customer.getCustomerId() != account.getCustomerId()) {
             throw new RuntimeException("This customer doesn't own this card");
-        }
-
-        List<Account> accounts = customer.getAccounts();
-        if (accounts.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No accounts found for customer");
-        }
-
-        Account account = accounts.get(0);
-        if (account.getBalance() < amount) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Insufficient balance for this transaction");
         }
 
         /* Create transaction for demo card transaction */

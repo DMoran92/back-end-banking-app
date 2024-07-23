@@ -4,6 +4,7 @@ import com.bankingapp.backend.model.Account;
 import com.bankingapp.backend.model.SavingsTransaction;
 import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.SavingsTransactionRepository;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ public class SavingsTransactionService {
     @Autowired
     private AccountRepository accountRepository;
     /* create new savings product */
+    @Transactional
     public void createSavingsTransaction(SavingsTransaction transaction) {
         Account account = accountRepository.findById(transaction.getAccountId())
              .orElseThrow(() -> new RuntimeException("Account not found"));
@@ -39,10 +41,12 @@ public class SavingsTransactionService {
         savingsTransactionRepository.save(transaction);
     }
     /* retrieve savings transactions by account ID */
+    @Transactional
     public List<SavingsTransaction> getSavingsTransactionsByAccount(Long accountId) {
         return savingsTransactionRepository.findByAccountId(accountId);
     }
     /* stop an active savings product */
+    @Transactional
     public void stopSavingsTransaction(Long transactionId) {
         /* retrieve the transaction using transactionId */
         SavingsTransaction transaction = savingsTransactionRepository.findById(transactionId)

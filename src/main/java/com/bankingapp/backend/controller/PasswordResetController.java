@@ -23,11 +23,11 @@ public class PasswordResetController {
     @PostMapping("/recover-password")
     public ResponseEntity<String> recoverPassword(@RequestBody Map<String, String> payload) {
 
-        logger.error("starting password recovery ...");
+        logger.info("starting password recovery ...");
         MailService mailService = new MailService();
         String email = payload.get("email");
         String token = passwordResetService.createPasswordResetToken(email);
-        logger.error("Generated token: {}. To be send to email: {}", token,email);
+        logger.info("Generated token: {}. To be send to email: {}", token,email);
         try {
             /* send the reset email */
             mailService.sendPasswordResetMail(token, email);

@@ -515,6 +515,7 @@ async function loadCards() {
                             <div class="card-body">
                                 <p class="card-text"><strong>Card Number:</strong> ${card.cardNumber}</p>
                                 <p class="card-text"><strong>Expiry Date:</strong> ${card.expiryDate}</p>
+                                <p class="card-text"><strong>Assigned to account:</strong> ${card.account.iban}</p>
                                 <p class="card-text"><strong>Status:</strong> ${card.status}</p>
                                 ${buttonsHtml}
                             </div>
@@ -527,12 +528,18 @@ async function loadCards() {
 }
 /* function used to order a new card */
 async function orderNewCard() {
+    event.preventDefault();
+    const accountId = document.getElementById('accountSelected').value;
     try {
         const response = await fetchWithToken('/api/cards/order', {
-            method: 'POST'
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ accountId })
         });
         if (response.includes('successful')) {
-            showSuccessMessage(response)
+            showSuccessMessage(response);
             await loadCards();
             await loadDashboard(); /* Update account balance and transactions on the UI. The order is charged 9.99 */
         } else {
@@ -542,8 +549,23 @@ async function orderNewCard() {
         showErrorModal('Ordering new card failed. Please try again later ');
     }
 }
+
+function loadAccountsForCards() {
+    const accountSelected = document.getElementById('accountSelected');
+    accountSelected.innerHTML = '';
+    customerAccounts.forEach(account => {
+        if (account.accountType === 'Current') {
+            const option = document.createElement('option');
+            option.value = account.accountId;
+            option.text = `${account.accountType} Account - ${account.iban}`;
+            accountSelected.appendChild(option);
+        }
+    });
+}
+
 /* show confirmation modal for ordering card */
 function showOrderCardConfirmation() {
+    loadAccountsForCards();
     const orderCardModal = new bootstrap.Modal(document.getElementById('orderCardModal'), {});
     orderCardModal.show();
 }

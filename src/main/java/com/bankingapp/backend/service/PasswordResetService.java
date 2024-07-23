@@ -4,6 +4,7 @@ import com.bankingapp.backend.model.PasswordResetToken;
 import com.bankingapp.backend.model.Customer;
 import com.bankingapp.backend.repository.PasswordResetTokenRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -24,7 +25,7 @@ public class PasswordResetService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
-
+    @Transactional
     public String createPasswordResetToken(String email) {
         Customer customer = customerRepository.findByEmail(email);
         if (customer == null) {
@@ -61,6 +62,7 @@ public class PasswordResetService {
         return passwordResetToken.getExpiryDate().after(new Timestamp(System.currentTimeMillis()));
     }
     /* reset password */
+    @Transactional
     public void resetPassword(String token, String newPassword) {
         /* make sure token is actually valid first */
         Optional<PasswordResetToken> tokenOpt = passwordResetTokenRepository.findByToken(token);
