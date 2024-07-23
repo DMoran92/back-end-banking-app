@@ -8,6 +8,7 @@ import com.bankingapp.backend.repository.AccountRepository;
 import com.bankingapp.backend.repository.CustomerRepository;
 import com.bankingapp.backend.repository.ExchangeRateRepository;
 import com.bankingapp.backend.service.TransactionService;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +51,7 @@ public class TransactionController {
     private ExchangeRateRepository exchangeRateRepository;
 
     @PostMapping("/makeTransaction/")
+    @Transactional
     public ResponseEntity<String> makeTransaction(@RequestBody Map<String, Object> payload){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -146,6 +148,7 @@ public class TransactionController {
     }
 
     @PostMapping("/deposit")
+    @Transactional
     public ResponseEntity<String> deposit(@RequestBody Map<String, Object> payload) {
 
         /* get customer based on the username */
@@ -183,6 +186,7 @@ public class TransactionController {
     }
 
     @PostMapping("/withdraw")
+    @Transactional
     public ResponseEntity<String> withdraw(@RequestBody Map<String, Object> payload) {
 
         /* get customer based on the username */
@@ -222,6 +226,7 @@ public class TransactionController {
     }
 
     @PostMapping("/currency-conversion")
+    @Transactional
     public ResponseEntity<String> handleCurrencyConversion(@RequestBody Map<String, Object> payload) {
         /* get customer based on the username */
         String username = getAuthenticatedUsername();
@@ -230,6 +235,7 @@ public class TransactionController {
         long fromAccountId = Long.parseLong(payload.get("fromAccountId").toString());
         long toAccountId = Long.parseLong(payload.get("toAccountId").toString());
         double amount = Double.parseDouble(payload.get("amount").toString());
+        /* MISTAKE - SHOULD CHECK THE CUSTOMER ACCOUNTS AND FILTER THEM OUT */
         /* check if both accounts exists */
         Account fromAccount = accountRepository.findById(fromAccountId)
                 .orElseThrow(() -> new RuntimeException("From account not found"));
