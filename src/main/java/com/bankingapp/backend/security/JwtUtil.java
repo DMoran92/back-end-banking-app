@@ -19,7 +19,7 @@ import java.util.function.Function;
 public class JwtUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtUtil.class);
-    private static final long EXPIRATION_TIME = 900000; // 15 mins
+    private static final long EXPIRATION_TIME = 3600000; // 1hour
 
     /* jwt secret is stored in JWT_SECRET ENV variable that can be set on production */
     @Value("${jwt.secret}")

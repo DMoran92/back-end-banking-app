@@ -60,12 +60,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        if (jwt == null) {
-            logger.warn("JWT token is missing in cookies");
-        } else {
-            logger.info("JWT token found in cookies: {}", jwt);
-        }
-
         String username = null;
 
         if (jwt != null) {
