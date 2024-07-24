@@ -15,6 +15,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
+import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.csrf.XorCsrfTokenRequestAttributeHandler;
 
 @Configuration
 @EnableWebSecurity
@@ -32,14 +36,19 @@ public class SecurityConfig {
     /* Bean responsible for setting up filtering policies */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
         logger.info("Configuring security filter chain");
         http
-                /* Disable CSRF as this is a stateless API and CSRF protection is not needed */
-                .csrf(csrf -> csrf.disable())
+                /* Enable CSRF */
+                .csrf(csrf -> csrf
+                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                        .csrfTokenRequestHandler(new CsrfTokenRequestAttributeHandler())
+                )
                 /* Configure authorization rules */
                 .authorizeHttpRequests(authorize -> authorize
                         /* Allow unauthenticated access to these endpoints */
                         .requestMatchers("/",
+                                "/csrf-token",
                                 "/resources/**",
                                 "/static/**",
                                 "/webjars/**",

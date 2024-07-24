@@ -55,6 +55,7 @@ public class RegisterController {
         String username = generateUniqueUsername();
         customer.setUsername(username);
         customer.setPassword(passwordEncoder.encode(customer.getPassword()));
+        customer.setRoles("ROLE_USER");
 
         // Add new customer
         newUserService.addNewCustomer(customer);
