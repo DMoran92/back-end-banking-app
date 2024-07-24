@@ -25,8 +25,8 @@
         }
 
         /* function used to find  the xsrf token inside cookies */
-        function getCsrfToken() {
-            fetchCsrfToken();
+        async function getCsrfToken() {
+             await fetchCsrfToken();
             const value = `; ${document.cookie}`;
             const parts = value.split(`; XSRF-TOKEN=`);
             if (parts.length === 2) return parts.pop().split(';').shift();
@@ -34,7 +34,7 @@
 
         // Use this function to include the CSRF token in your fetch request
         async function fetchWithCsrf(url, options = {}) {
-            const csrfToken = getCsrfToken();
+            const csrfToken = await getCsrfToken();
             const headers = {
                 'X-XSRF-TOKEN': csrfToken,
                 ...options.headers
