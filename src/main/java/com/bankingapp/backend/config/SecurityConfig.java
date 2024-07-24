@@ -34,8 +34,6 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         logger.info("Configuring security filter chain");
         http
-                /* Disable CSRF as this is a stateless API and CSRF protection is not needed */
-                .csrf(csrf -> csrf.disable())
                 /* Configure authorization rules */
                 .authorizeHttpRequests(authorize -> authorize
                         /* Allow unauthenticated access to these endpoints */
