@@ -177,6 +177,6 @@ public class PaymentCardController {
         accountRepository.save(account);
         /* Save the transaction */
         transactionService.makeNewTransaction(demoCardTrasanction);
-        return ResponseEntity.ok("Payment done");
+        return ResponseEntity.ok("Payment done successfully");
     }
 }

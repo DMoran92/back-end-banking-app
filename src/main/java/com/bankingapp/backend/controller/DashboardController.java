@@ -102,7 +102,7 @@ public class DashboardController {
     }
     
     @PostMapping("/makeAccount/")
-    public String makeAccount(@RequestBody Map<String, Object> payload){
+    public ResponseEntity<String> makeAccount(@RequestBody Map<String, Object> payload){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();
@@ -119,11 +119,11 @@ public class DashboardController {
         newAccount.setCurrency(payload.get("currency").toString());
         newAccountServiceImpl.addNewAccount(newAccount);
 
-        return "redirect:/dashboard";
+        return ResponseEntity.ok("Made new account successfully");
     }
 
     @PostMapping("/contactUs/")
-    public String contactUs(@RequestBody Map<String, Object> payload) throws MailjetSocketTimeoutException, MailjetException {
+    public ResponseEntity<String> contactUs(@RequestBody Map<String, Object> payload) throws MailjetSocketTimeoutException, MailjetException {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String username = userDetails.getUsername();
@@ -141,6 +141,6 @@ public class DashboardController {
         logger.info("mailText: {}", mailText);
 
         ms.sendMail(mailText, firstName, lastName, email, customerId);
-        return "redirect:/dashboard";
+        return ResponseEntity.ok("Email sent successfully");
     }
 }

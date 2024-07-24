@@ -5,13 +5,37 @@ var customerAccounts = [];
 /*  Initialize a default account until another is selected */
 var accountRefIndex = 0;
 
+// Function to fetch CSRF token
+async function fetchCsrfToken() {
+    const response = await fetch('/csrf-token', {
+        credentials: 'include'
+    });
+    const data = await response.json();
+    document.cookie = `XSRF-TOKEN=${data.token}; path=/`;
+}
+
+/* function used to find  the xsrf token inside cookies */
+async function getCsrfToken() {
+    await fetchCsrfToken();
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; XSRF-TOKEN=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
 /* Function to make a fetch request with included credentials (cookies)
    https://javascript.info/fetch-crossorigin#credentials
    https://developer.mozilla.org/en-US/docs/Web/API/fetch#credentials
    if we don't have this we get 403 sometimes */
 async function fetchWithToken(url, options = {}) {
+
+    const csrfToken = await getCsrfToken();
+    const headers = {
+        'X-XSRF-TOKEN': csrfToken,
+        ...options.headers
+    };
     const response = await fetch(url, {
         ...options,
+        headers,
         credentials: 'include' // Ensure cookies are included in the request
     });
 
@@ -27,7 +51,7 @@ async function fetchWithToken(url, options = {}) {
         responseBody = await response.text(); // Fallback to text if JSON parsing fails
     }
     if (!response.ok) {
-        throw new Error(responseBody);
+        throw new Error(response);
     }
     return responseBody;
 }
@@ -667,7 +691,7 @@ async function makeCardTransaction(event) {
     cardTransactionModal.hide();
 
     try {
-        const response = await fetch('/api/cards/transaction', {
+        const response = await fetchWithToken('/api/cards/transaction', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -675,8 +699,7 @@ async function makeCardTransaction(event) {
             body: JSON.stringify({cardId: cardId, transactionType: transactionType, amount: amount})
         });
 
-        if (response.ok) {
-
+        if (response.includes('successfull')) {
             showSuccessMessage('Transaction successful');
         } else {
             showErrorModal('Transaction Failed');
@@ -908,7 +931,7 @@ async function payBill() {
     };
 
     try {
-        await fetchWithToken('/transaction/makeTransaction/', {
+        const response = await fetchWithToken('/transaction/makeTransaction/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -917,6 +940,11 @@ async function payBill() {
         });
         const billPaymentModal = bootstrap.Modal.getInstance(document.getElementById('billPaymentModal'));
         billPaymentModal.hide();
+        if (response.includes('successful')) {
+            showSuccessMessage('Transaction successful');
+        } else {
+            showErrorModal('Bill payment failed.')
+        }
     } catch (error) {
         showErrorModal('Bill Payment failed');
     }
@@ -939,7 +967,7 @@ async function makeTransaction(event){
     }
 
     /* Make a POST request to the /api/authenticate endpoint */
-    const response = await fetch('/transaction/makeTransaction/', {
+    const response = await fetchWithToken('/transaction/makeTransaction/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -948,12 +976,10 @@ async function makeTransaction(event){
         body: JSON.stringify({ accountId: accountId, amount: amount, recipientName: recipientName, recipientIBAN: recipientIBAN, category: category })
     });
 
-    const resposneBody = await response.text();
-    if (response.ok) {
+    if (response.includes('successful')) {
         showSuccessMessage('Transaction successful');
-
     } else {
-        showErrorModal('Transaction failed: ' + resposneBody);
+        showErrorModal('Transaction failed: ' + response);
     }
     /* reset the form for another transaction */
     document.getElementById('makeTransactionForm').reset();
@@ -966,8 +992,8 @@ async function makeAccount(event){
     const accountType = document.getElementById('accountType').value;
     const currency = accountType === 'Currency' ? document.getElementById('accountCurrency').value : 'EUR';
 
-    /* Make a POST request to the /api/authenticate endpoint */
-    const response = await fetch('/dashboard/makeAccount/', {
+    /* Make a POST request to the /dashboard/makeAccount/ endpoint */
+    const response = await fetchWithToken('/dashboard/makeAccount/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -976,7 +1002,7 @@ async function makeAccount(event){
         body: JSON.stringify({ accountType: accountType, currency: currency })
     });
     /* If the response is OK, redirect to the dashboard page */
-    if (response.ok) {
+    if (response.includes('successful')) {
         showSuccessMessage("Account created successfully.");
         /* Refresh the dashboard to show the new account */
         loadDashboard();
@@ -1028,7 +1054,7 @@ async function contactUs(event){
     const mailText = document.getElementById('mailText').value;
 
     /* Make a POST request to the /api/authenticate endpoint */
-    const response = await fetch('/dashboard/contactUs/', {
+    const response = await fetchWithToken('/dashboard/contactUs/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -1037,7 +1063,7 @@ async function contactUs(event){
         body: JSON.stringify({ mailText: mailText })
     });
     /* If the response is OK, redirect to the dashboard page */
-    if (response.ok) {
+    if (response.includes('successful')) {
         showSuccessMessage("Request sent successfully.");
         const contactUsModal = bootstrap.Modal.getInstance(document.getElementById('contactUsModal'));
         if (contactUsModal) {
