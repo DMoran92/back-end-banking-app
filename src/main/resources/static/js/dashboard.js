@@ -59,15 +59,42 @@ async function refreshUserData() {
     customerAccounts = data.customer.accounts;
 }
 
+function currencySymbolChange(accountCurrency){
+    let currencySymbol = '';
+    if(accountCurrency === 'EUR'){
+        currencySymbol = '€';
+    } else if (accountCurrency === 'USD'){
+        currencySymbol = '$';
+    }else if (accountCurrency === 'GBP'){
+        currencySymbol = '£';
+    }else if (accountCurrency === 'JPY'){
+        currencySymbol = '¥';
+    }else if (accountCurrency === 'CNY'){
+        currencySymbol = '¥';
+    }else if (accountCurrency === 'CHF'){
+        currencySymbol = 'Fr. ';
+    }else if (accountCurrency === 'AUD'){
+        currencySymbol = '$';
+    }else if (accountCurrency === 'CAD'){
+        currencySymbol = '$';
+    }else if (accountCurrency === 'PLN'){
+        currencySymbol = 'zł';
+    }
+
+    return currencySymbol;
+
+}
+
 function populateDashboard(data) {
     /* populate customer details */
     if (data.customer && data.customer.firstName && data.customer.lastName && data.customer.accounts) {
         document.getElementById('welcomeHeader').innerHTML = `<i style = "font-size:16px">Welcome back, ${data.customer.firstName} ${data.customer.lastName}!</i>`;
         /* generate HTML for accounts table rows */
+
         var accountsHtml = data.customer.accounts.map(account => `
             <tr><td>${account.accountId}</td>
                 <td>${account.accountType} (${account.currency})</td>
-                <td>${parseFloat(account.balance).toFixed(2)}</td>
+                <td>${currencySymbolChange(account.currency)}${parseFloat(account.balance).toFixed(2)}</td>
             </tr>
         `).join('');
         /* highlight the currently selected account */
@@ -78,8 +105,10 @@ function populateDashboard(data) {
         /* insert the generated HTML into the accounts table */
         document.getElementById('account-details').innerHTML = accountsHtml;
 
+        let currencySymbol = currencySymbolChange(data.customer.accounts.at(accountRefIndex).currency);
+
         /* populate recent transactions for the selected account */
-        populateRecentTransactions(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
+        populateRecentTransactions(currencySymbol,data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
         /* Process recent and monthly expenditure graphs for selected account */
         processRecentExpenditure(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
         processMonthlyExpenditure(data.customer.accounts[accountRefIndex].iban,data.customer.accounts[accountRefIndex].transactions);
@@ -245,20 +274,22 @@ function filterTransactions() {
         return transactionDate >= startDate && transactionDate <= endDate;
     });
 
+    let currencySymbol = currencySymbolChange(selectedAccount.currency)
+
     currentTransactionPage = 1;
-    paginateTransactions();
+    paginateTransactions(currencySymbol);
 }
 /* function to handle pagination of transactions */
-function paginateTransactions() {
+function paginateTransactions(currencySymbol) {
     const start = (currentTransactionPage - 1) * transactionsPerPage;
     const end = start + transactionsPerPage;
     const paginatedTransactions = filteredTransactions.slice(start, end);
 
-    populateTransactionsTable(paginatedTransactions);
+    populateTransactionsTable(currencySymbol, paginatedTransactions);
     updatePaginationControls();
 }
 /* function to populate the transactions table */
-function populateTransactionsTable(transactions) {
+function populateTransactionsTable(currencySymbol, transactions) {
     /* empty transaction table, display information back to this user */
     if (transactions.length === 0) {
         document.getElementById('transactionsTable').innerHTML = `<tr><td colspan="5" class="text-center">--- NO TRANSACTIONS FOR THIS PERIOD ---</td></tr>`;
@@ -282,7 +313,7 @@ function populateTransactionsTable(transactions) {
         return `
             <tr>
                 <td>${transactionName}</td>
-                <td style="color: ${isOutgoing ? 'red' : 'green'};">${transaction.amount}</td>
+                <td style="color: ${isOutgoing ? 'red' : 'green'};">${currencySymbol}${parseFloat(transaction.amount).toFixed(2)}</td>
                 <td>${transaction.category}</td>
                 <td>${transaction.timestamp}</td>
             </tr>
@@ -312,7 +343,7 @@ function changeTransactionPage(page) {
     paginateTransactions();
 }
 /* Function to populate the recent transactions table */
-function populateRecentTransactions(iban,transactions) {
+function populateRecentTransactions(currencySymbol, iban,transactions) {
     /* sort transactions by date in descending order */
     transactions.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -336,7 +367,7 @@ function populateRecentTransactions(iban,transactions) {
         return `
             <tr>
                 <td>${transactionName}</td>
-                <td style="color: ${isOutgoing ? 'red' : 'green'};">${transaction.amount}</td>
+                <td style="color: ${isOutgoing ? 'red' : 'green'};">${currencySymbol}${parseFloat(transaction.amount).toFixed(2)}</td>
                 <td>${transaction.timestamp}</td>
             </tr>
         `;
@@ -1198,7 +1229,7 @@ async function loadActiveSavings(accountId) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td>${saving.amount.toFixed(2)}</td>
-                    <td>${saving.interestRate.toFixed(2)}%</td>
+                    <td>${saving.interestRate.toFixed(2) * 100}%</td>
                     <td>${new Date(saving.startDate).toLocaleString()}</td>
                     <td><button class="btn btn-danger" onclick="stopSavings(${saving.transactionId})">Stop</button></td>
                 `;
