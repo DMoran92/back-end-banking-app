@@ -51,7 +51,7 @@ async function fetchWithToken(url, options = {}) {
         responseBody = await response.text(); // Fallback to text if JSON parsing fails
     }
     if (!response.ok) {
-        throw new Error(response);
+        throw new Error(responseBody);
     }
     return responseBody;
 }
@@ -601,7 +601,7 @@ async function orderNewCard() {
             showErrorModal(response);
         }
     } catch (error) {
-        showErrorModal('Ordering new card failed. Please try again later ');
+        showErrorModal('Ordering new card failed. ' + error);
     }
 }
 
@@ -1428,7 +1428,7 @@ async function loadExchangeRates() {
         /* the response will be used in the conversion modal */
         return response;
     } catch (error) {
-        showErrorModal('Failed to load exchange rates: ' + error.message);
+        showErrorModal('Failed to load exchange rates: ' + error);
     }
 }
 /* function to populate current currency exchange rates table */
